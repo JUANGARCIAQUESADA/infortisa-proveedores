@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infortisa · Inteligencia de Proveedores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- MSAL.js - autenticación Microsoft -->
+<script src="https://alcdn.msauth.net/browser/3.22.0/js/msal-browser.min.js"></script>
+<style>
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #e2ddd8;
+  --border2: #ccc8c2;
+  --text: #1a1815;
+  --text2: #6b6560;
+  --text3: #9b958f;
+  --accent: #2563eb;
+  --accent-bg: #eff4ff;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+.logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
+.logo-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+.logo-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+.nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; color: var(--text2); transition: all .15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+.nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-sep { height: 1px; background: var(--border); margin: 8px 0; }
+.nav-label { font-size: 10px; font-family: var(--mono); color: var(--text3); padding: 4px 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text3); }
+.profile-pill { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.profile-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+
+/* MAIN */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+.topbar { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+.page-title { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+.page-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.content { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+/* BUTTONS */
+.btn { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; font-family: var(--sans); cursor: pointer; transition: all .15s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-ghost { background: transparent; color: var(--text2); border-color: var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: var(--red-bg); color: var(--red); border-color: #fca5a5; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+/* METRICS */
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+.metric-label { font-size: 11px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.metric-value { font-size: 26px; font-weight: 600; letter-spacing: -1px; color: var(--text); line-height: 1; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.metric-alert .metric-value { color: var(--red); }
+.metric-warn .metric-value { color: var(--amber); }
+.metric-ok .metric-value { color: var(--green); }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; font-family: var(--mono); }
+.badge-ok { background: var(--green-bg); color: var(--green); }
+.badge-warn { background: var(--amber-bg); color: var(--amber); }
+.badge-alert { background: var(--red-bg); color: var(--red); }
+.badge-pending { background: var(--surface2); color: var(--text3); }
+.badge-blue { background: var(--accent-bg); color: var(--accent); }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-size: 11px; font-family: var(--mono); color: var(--text3); font-weight: 400; padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--surface2); }
+.strong { font-weight: 500; }
+
+/* PROGRESS BAR */
+.pbar-wrap { height: 5px; background: var(--surface2); border-radius: 3px; display: inline-block; width: 60px; vertical-align: middle; }
+.pbar { height: 5px; border-radius: 3px; transition: width .3s; }
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 11px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.3px; }
+.form-input { padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 13px; font-family: var(--sans); transition: border-color .15s; }
+.form-input:focus { outline: none; border-color: var(--accent); }
+.form-input::placeholder { color: var(--text3); }
+select.form-input { cursor: pointer; }
+
+/* UPLOAD ZONE */
+.upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 28px; text-align: center; color: var(--text3); font-size: 13px; cursor: pointer; transition: all .15s; margin-bottom: 14px; }
+.upload-zone:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.upload-icon { width: 24px; height: 24px; margin: 0 auto 8px; opacity: 0.5; }
+
+/* DOC LIST */
+.doc-list { display: flex; flex-direction: column; gap: 6px; }
+.doc-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface2); border-radius: var(--radius-sm); font-size: 12px; }
+.doc-name { color: var(--text); font-weight: 500; }
+.doc-date { color: var(--text3); font-family: var(--mono); }
+
+/* TOGGLE */
+.toggle { width: 38px; height: 22px; background: var(--border2); border-radius: 11px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; border: none; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle.on::after { transform: translateX(16px); }
+
+/* CONFIG ROW */
+.config-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.config-row:last-child { border-bottom: none; }
+.config-info .config-label { font-size: 13px; font-weight: 500; }
+.config-info .config-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* CHAT / CLAUDE */
+.claude-panel { display: flex; flex-direction: column; height: 100%; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 300px; max-height: 400px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin-bottom: 12px; }
+.msg { max-width: 85%; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; line-height: 1.55; }
+.msg-user { background: var(--accent); color: #fff; align-self: flex-end; border-radius: var(--radius) var(--radius) 2px var(--radius); }
+.msg-claude { background: var(--surface2); color: var(--text); align-self: flex-start; border-radius: 2px var(--radius) var(--radius) var(--radius); }
+.msg-claude strong { display: block; font-size: 11px; font-family: var(--mono); color: var(--text3); margin-bottom: 4px; }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input { flex: 1; padding: 10px 14px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-family: var(--sans); font-size: 13px; color: var(--text); background: var(--surface); resize: none; }
+.chat-input:focus { outline: none; border-color: var(--accent); }
+.quick-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.quick-prompt { padding: 4px 10px; border: 1px solid var(--border2); border-radius: 20px; font-size: 12px; color: var(--text2); cursor: pointer; background: var(--surface); transition: all .15s; }
+.quick-prompt:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+
+/* PROFILE CARD */
+.profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.profile-avatar-lg { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; flex-shrink: 0; }
+.profile-name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+.profile-meta { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; }
+.kpi-label { font-size: 10px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.kpi-val { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+
+/* CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-wrap { position: relative; height: 200px; }
+
+/* ALERT BANNER */
+.alert-banner { background: var(--red-bg); border: 1px solid #fca5a5; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--red); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+
+/* RANGE */
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-row input[type=range] { flex: 1; accent-color: var(--accent); }
+.range-val { font-size: 14px; font-weight: 600; font-family: var(--mono); min-width: 40px; color: var(--text); }
+
+/* SECTOR COMPARE */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.compare-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+.compare-name { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.compare-stat { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); padding: 3px 0; border-bottom: 1px solid var(--border); }
+.compare-stat:last-child { border-bottom: none; }
+.compare-stat span:last-child { font-weight: 500; color: var(--text); font-family: var(--mono); }
+
+/* LOADING */
+.loading { display: flex; align-items: center; gap: 8px; color: var(--text3); font-size: 12px; font-style: italic; }
+.dot-anim { display: inline-flex; gap: 3px; }
+.dot-anim span { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+.dot-anim span:nth-child(2) { animation-delay: .2s; }
+.dot-anim span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-4px)} }
+
+/* TABS within sections */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab { padding: 8px 16px; font-size: 13px; color: var(--text3); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all .15s; margin-bottom: -1px; }
+.tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
+.tab:hover { color: var(--text); }
+
+.sep { height: 1px; background: var(--border); margin: 18px 0; }
+.flex { display: flex; }
+.gap8 { gap: 8px; }
+.gap12 { gap: 12px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mb16 { margin-bottom: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">Infortisa</div>
+    <div class="logo-sub">proveedores · v1.1</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Principal</div>
+    <button class="nav-item active" onclick="goTo('dashboard', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="goTo('proveedores', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Proveedores
+    </button>
+    <button class="nav-item" onclick="goTo('alta', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+      Alta / Compliance
+    </button>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Inteligencia</div>
+    <button class="nav-item" onclick="goTo('mercado', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/></svg>
+      Análisis de mercado
+    </button>
+    <button class="nav-item" onclick="goTo('claude', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+      Consultar a Claude
+    </button>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Sistema</div>
+    <button class="nav-item" onclick="goTo('config', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>
+      Configuración
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="profile-pill">
+      <div class="profile-avatar" id="user-avatar">JG</div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--text)" id="user-name">Juan García</div>
+        <div style="font-size:11px;color:var(--text3)" id="user-role">Dirección</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">Resumen general</div>
+    </div>
+    <div class="topbar-actions">
+      <span id="sync-status" style="font-size:11px;font-family:var(--mono);display:none;margin-right:4px"></span>
+      <button id="btn-login-ms" class="btn btn-ghost btn-sm" onclick="loginMicrosoft()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 21 21" fill="none"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        Conectar Microsoft
+      </button>
+      <span id="alerts-badge" style="font-size:12px;background:var(--red-bg);color:var(--red);padding:4px 10px;border-radius:4px;font-family:var(--mono);font-weight:500;display:none"></span>
+      <button class="btn btn-ghost btn-sm" onclick="goTo('alta',null)">+ Nuevo proveedor</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="s-dashboard">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Proveedores activos</div><div class="metric-value" id="m-total">—</div><div class="metric-sub" id="m-total-sub">cargando...</div></div>
+        <div class="metric metric-ok"><div class="metric-label">Compra total anual</div><div class="metric-value" id="m-compra">—</div><div class="metric-sub">ejercicio actual</div></div>
+        <div class="metric metric-alert"><div class="metric-label">Alertas dependencia</div><div class="metric-value" id="m-alerts">—</div><div class="metric-sub">superan umbral</div></div>
+        <div class="metric metric-warn"><div class="metric-label">Alta pendiente</div><div class="metric-value" id="m-pending">—</div><div class="metric-sub">en proceso de alta</div></div>
+      </div>
+
+      <div id="alert-banners"></div>
+
+      <div class="charts-row">
+        <div class="card">
+          <div class="card-title">Compra por proveedor (€K)</div>
+          <div class="chart-wrap"><canvas id="c-compra"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">% dependencia s/ facturación <span id="umbral-label" style="font-size:11px;font-family:var(--mono);color:var(--red)">umbral: 25%</span></div>
+          <div class="chart-wrap"><canvas id="c-depend"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROVEEDORES -->
+    <div id="s-proveedores" style="display:none">
+      <div class="flex gap8 mb16">
+        <input class="form-input" style="flex:1" placeholder="Buscar proveedor..." oninput="filterProveedores(this.value)">
+        <button class="btn btn-primary" onclick="goTo('alta',null)">+ Nuevo proveedor</button>
+        <button class="btn btn-ghost" onclick="recargarDatos()">⟳ Actualizar</button>
+        <button class="btn btn-ghost" onclick="exportCSV()">Exportar CSV</button>
+      </div>
+      <div class="card mb16">
+        <div class="table-wrap">
+          <table id="prov-table">
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>CIF</th>
+                <th>Fact. total</th>
+                <th>Empleados</th>
+                <th>€/empleado</th>
+                <th>% depend.</th>
+                <th>Compra Infortisa</th>
+                <th>Estado</th>
+                <th>Prox. revisión</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="prov-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="ficha-proveedor" style="display:none"></div>
+    </div>
+
+    <!-- ALTA -->
+    <div id="s-alta" style="display:none">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('tab-manual','alta-tabs',this)">Subida manual</button>
+        <button class="tab" onclick="showTab('tab-auto','alta-tabs',this)">Solicitud automática</button>
+        <button class="tab" onclick="showTab('tab-eval','alta-tabs',this)">Evaluación Claude</button>
+      </div>
+
+      <div id="tab-manual" data-group="alta-tabs">
+        <div class="grid2">
+          <div>
+            <div class="card mb16">
+              <div class="card-title">Datos del proveedor</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Razón social</label><input class="form-input" id="f-nombre" placeholder="Empresa SL"></div>
+                <div class="form-group"><label class="form-label">CIF</label><input class="form-input" id="f-cif" placeholder="B-XXXXXXXX"></div>
+                <div class="form-group"><label class="form-label">Email contacto</label><input class="form-input" id="f-email" placeholder="empresa@mail.com"></div>
+                <div class="form-group"><label class="form-label">Nombre contacto</label><input class="form-input" id="f-contacto" placeholder="Nombre Apellido"></div>
+                <div class="form-group"><label class="form-label">Facturación total (€)</label><input class="form-input" id="f-facturacion" placeholder="0" type="number"></div>
+                <div class="form-group"><label class="form-label">Núm. empleados</label><input class="form-input" id="f-empleados" placeholder="0" type="number"></div>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Compra prevista Infortisa (€/año)</label>
+                  <input class="form-input" id="f-compra" placeholder="0" type="number">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Periodicidad revisión</label>
+                  <select class="form-input" id="f-periodicidad">
+                    <option>Trimestral</option><option>Semestral</option><option>Anual</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div id="depend-calc" class="card mb16" style="display:none">
+              <div class="card-title">Cálculo de dependencia</div>
+              <div id="depend-result" style="font-size:13px"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card mb16">
+              <div class="card-title">Documentación requerida</div>
+              <div class="doc-list" id="doc-list">
+                <div class="doc-item"><span class="doc-name">Informe comercial Informa D&amp;B</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Cert. Hacienda al corriente</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Cert. Seguridad Social</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Escritura de constitución</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Tarjeta identificativa CIF</span><span class="badge badge-warn">Pendiente</span></div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">La documentación se solicita automáticamente por email al guardar el proveedor (Power Automate).</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" style="flex:1" onclick="guardarProveedor()">Guardar y activar alta</button>
+              <button class="btn btn-ghost" onclick="calcularDependencia()">Calcular depend.</button>
+            </div>
+            <div id="guardar-status" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--radius-sm)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-auto" data-group="alta-tabs" style="display:none">
+        <div class="card">
+          <div class="card-title">Solicitud automática vía Power Automate</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+            Introduce el email del proveedor y Claude redactará el email de solicitud. Power Automate lo enviará automáticamente y guardará las respuestas en OneDrive.
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Razón social</label><input class="form-input" id="auto-nombre" placeholder="Empresa SL"></div>
+            <div class="form-group"><label class="form-label">Email proveedor</label><input class="form-input" id="auto-email" placeholder="proveedor@empresa.com"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Información a solicitar</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked> Cert. Hacienda</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked> Cert. SS</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" checked> Facturación total</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> Escritura constitución</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox"> CIF</label>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generarEmailAuto()">Generar email con Claude</button>
+          <div id="email-generado" style="margin-top:16px;display:none">
+            <div class="card-title" style="margin-bottom:8px">Email generado</div>
+            <div id="email-content" style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.6;white-space:pre-wrap;font-family:var(--sans);border:1px solid var(--border)"></div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <button class="btn btn-primary btn-sm">Enviar vía Outlook</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('email-generado').style.display='none'">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-eval" data-group="alta-tabs" style="display:none">
+        <div class="card">
+          <div class="card-title">Evaluación de compliance con Claude</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+            Selecciona un proveedor. Claude analizará los datos disponibles y emitirá un dictamen de compliance.
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Proveedor a evaluar</label>
+            <select class="form-input" id="eval-prov"></select>
+          </div>
+          <button class="btn btn-primary" onclick="evaluarCompliance()">Evaluar con Claude</button>
+          <div id="eval-result" style="margin-top:16px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MERCADO -->
+    <div id="s-mercado" style="display:none">
+      <div class="grid2 mb16">
+        <div class="card">
+          <div class="card-title">Añadir empresa de referencia</div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Razón social</label><input class="form-input" id="ref-nombre" placeholder="Empresa SL"></div>
+            <div class="form-group"><label class="form-label">Tipo</label>
+              <select class="form-input"><option>Proveedor potencial</option><option>Competidor</option><option>Referencia sector</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Facturación (€)</label><input class="form-input" id="ref-fact" placeholder="0" type="number"></div>
+            <div class="form-group"><label class="form-label">Empleados</label><input class="form-input" id="ref-emp" placeholder="0" type="number"></div>
+          </div>
+          <button class="btn btn-primary" onclick="addRefEmpresa()">Añadir y comparar</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Empresas de referencia cargadas</div>
+          <div class="compare-grid" id="ref-grid">
+            <div class="compare-card">
+              <div class="compare-name" style="color:var(--text3)">Ref. sector A</div>
+              <div class="compare-stat"><span>Fact.</span><span>5.1M</span></div>
+              <div class="compare-stat"><span>Empleados</span><span>72</span></div>
+              <div class="compare-stat"><span>€/empl.</span><span>70.8K</span></div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-name" style="color:var(--text3)">Ref. sector B</div>
+              <div class="compare-stat"><span>Fact.</span><span>2.8M</span></div>
+              <div class="compare-stat"><span>Empleados</span><span>31</span></div>
+              <div class="compare-stat"><span>€/empl.</span><span>90.3K</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Facturación por empleado — tus proveedores vs mercado</div>
+        <div style="position:relative;height:240px"><canvas id="c-mercado"></canvas></div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:var(--text3)">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#2563eb"></span>Proveedores activos</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#d1d5db;border:0.5px solid #9ca3af"></span>Referencias mercado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLAUDE -->
+    <div id="s-claude" style="display:none">
+      <div class="card">
+        <div class="card-title">Consulta a Claude sobre tus proveedores</div>
+        <div class="quick-prompts">
+          <div class="quick-prompt" onclick="sendQuick(this)">¿Qué proveedores están cerca del límite del 25%?</div>
+          <div class="quick-prompt" onclick="sendQuick(this)">¿Cuál es el proveedor con mejor ratio facturación/empleado?</div>
+          <div class="quick-prompt" onclick="sendQuick(this)">Redacta el email trimestral de revisión</div>
+          <div class="quick-prompt" onclick="sendQuick(this)">Resume el estado del portfolio de proveedores</div>
+          <div class="quick-prompt" onclick="sendQuick(this)">¿Qué proveedor representa mayor riesgo de dependencia?</div>
+        </div>
+        <div class="chat-messages" id="chat-msgs">
+          <div class="msg msg-claude"><strong>Claude · Infortisa</strong>Hola Juan. Tengo acceso al portfolio de tus proveedores. Puedo analizar dependencias, salud financiera, comparar con el mercado o redactar comunicaciones. ¿En qué te ayudo?</div>
+        </div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chat-input" rows="2" placeholder="Pregunta sobre tus proveedores..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+          <button class="btn btn-primary" onclick="sendChat()">Enviar</button>
+        </div>
+        <div id="claude-key-warning" style="display:none;margin-top:8px;font-size:11px;color:var(--amber);background:var(--amber-bg);padding:6px 10px;border-radius:4px">
+          Configura tu clave API de Claude en <strong>Configuración → API Claude</strong> para activar el asistente.
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="s-config" style="display:none">
+      <div class="grid2">
+        <div>
+          <div class="card mb16">
+            <div class="card-title">Criterios de compliance</div>
+            <div class="config-row">
+              <div class="config-info">
+                <div class="config-label">% máximo de dependencia</div>
+                <div class="config-sub">Infortisa no debe superar este % de la facturación del proveedor</div>
+              </div>
+              <div class="range-row">
+                <input type="range" min="5" max="50" value="25" step="1" id="pct-slider" oninput="updateUmbral(this.value)" style="width:90px">
+                <span class="range-val" id="pct-display">25%</span>
+              </div>
+            </div>
+            <div class="config-row">
+              <div class="config-info">
+                <div class="config-label">Periodicidad de revisión</div>
+                <div class="config-sub">Frecuencia de solicitud a proveedores existentes</div>
+              </div>
+              <select class="form-input" style="width:140px" id="cfg-period">
+                <option>Trimestral</option><option>Mensual</option><option>Semestral</option><option>Anual</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <div class="config-info">
+                <div class="config-label">Alertas automáticas por email</div>
+                <div class="config-sub">Notificar a Dirección y Administración</div>
+              </div>
+              <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+            </div>
+            <div class="config-row">
+              <div class="config-info">
+                <div class="config-label">Solicitud automática (Power Automate)</div>
+                <div class="config-sub">Lanzar emails sin intervención manual</div>
+              </div>
+              <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+            </div>
+          </div>
+
+          <!-- API KEY CLAUDE -->
+          <div class="card mb16">
+            <div class="card-title">API Claude (Anthropic)</div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Clave API</label>
+              <input class="form-input" id="cfg-claude-key" type="password" placeholder="sk-ant-api03-..." style="font-family:var(--mono);font-size:12px">
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+              La clave se guarda solo en este navegador (localStorage). No sale de tu equipo.<br>
+              Obtén tu clave en <strong>console.anthropic.com</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="btn btn-primary btn-sm" onclick="guardarClaudeKey()">Guardar clave</button>
+              <button class="btn btn-ghost btn-sm" onclick="borrarClaudeKey()">Borrar</button>
+              <span id="claude-key-status" style="font-size:11px;color:var(--green);display:none">✓ Guardada correctamente</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb16">
+            <div class="card-title">Usuarios y permisos</div>
+            <table style="width:100%;font-size:12px;border-collapse:collapse">
+              <thead><tr><th style="text-align:left;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase">Usuario</th><th style="text-align:left;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase">Perfil</th><th style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase">Aprueba</th><th style="text-align:center;padding:6px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase">Ve fact.</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:8px 0;border-bottom:1px solid var(--border)">Juan García</td><td><span class="badge badge-blue">Dirección</span></td><td style="text-align:center">✓</td><td style="text-align:center">✓</td></tr>
+                <tr><td style="padding:8px 0;border-bottom:1px solid var(--border)">Administración</td><td><span class="badge badge-pending">Admin</span></td><td style="text-align:center">—</td><td style="text-align:center">✓</td></tr>
+                <tr><td style="padding:8px 0">Product Manager</td><td><span class="badge badge-pending">PM</span></td><td style="text-align:center">—</td><td style="text-align:center">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card mb16">
+            <div class="card-title">Conexión Microsoft</div>
+            <div id="ms-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5">
+              Comprobando estado de autenticación...
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="loginMicrosoft()">Reconectar Microsoft</button>
+              <button class="btn btn-ghost btn-sm" onclick="recargarDatos()">⟳ Recargar datos</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">OneDrive — estructura de carpetas</div>
+            <div style="font-size:12px;font-family:var(--mono);line-height:2;color:var(--text2)">
+              📁 Infortisa/Proveedores/<br>
+              &nbsp;&nbsp;📁 _Control/ ← Excel maestro<br>
+              &nbsp;&nbsp;📁 Activos/<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;📁 [Nombre proveedor]/<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 Informe_comercial.pdf<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 Cert_Hacienda.pdf<br>
+              &nbsp;&nbsp;📁 Alta_pendiente/
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<script>
+// ─── CONFIGURACIÓN AZURE AD ───────────────────────────────────────────────────
+const AZURE = {
+  clientId: '318410c5-35b5-4246-a34a-4cf86d84965a',
+  authority: 'https://login.microsoftonline.com/98b4a4e1-29ff-45f2-b585-ba2fcb594a88',
+  get redirectUri() {
+    // Usa la URL actual como redirect URI — debe estar registrada en Azure AD
+    return window.location.href.split('?')[0].split('#')[0];
+  }
+};
+
+// Permisos: User.Read (sin consent admin) + Sites.ReadWrite.All + Files.ReadWrite.All
+// Sites.ReadWrite.All y Files.ReadWrite.All requieren que el admin los apruebe en Azure AD
+const SCOPES = ['User.Read', 'Sites.ReadWrite.All', 'Files.ReadWrite.All'];
+
+// Configuración SharePoint
+const SP = {
+  sitePath: 'iggual.sharepoint.com:/sites/InfortisaProveedores',
+  siteUrl:  'https://iggual.sharepoint.com/sites/InfortisaProveedores',
+  listName: 'Proveedores',
+  driveId:  'b!viUKI2qbqkmz7Qjo3_Qe4gkrq95_PIVAviTFRCB1_r36R6wATmlJT5Cg2FxzrsH5',
+  excelPath:'Infortisa/Proveedores/_Control/proveedores_control.xlsx',
+  tableName:'Tabla1'
+};
+
+const UMBRAL = { val: 25 };
+let msalApp = null;
+let spSiteId = null;
+let PROVEEDORES = [];
+
+// ─── DATOS DEMO ───────────────────────────────────────────────────────────────
+const DEMO = [
+  { id:'d1', nombre:'Binary SL',      cif:'B46000001', facturacion:12000000, empleados:80,  compra:280000, estado:'ok',      revision:'Jun 2025', docs:[], email:'info@binary.es',       contacto:'',  umbral:25, periodicidad:'Semestral' },
+  { id:'d2', nombre:'Depau SL',       cif:'B46000002', facturacion:3500000,  empleados:25,  compra:420000, estado:'alerta',  revision:'Mar 2025', docs:[], email:'',                      contacto:'',  umbral:25, periodicidad:'Trimestral' },
+  { id:'d3', nombre:'Megasur SL',     cif:'B29000003', facturacion:45000000, empleados:320, compra:850000, estado:'ok',      revision:'Sep 2025', docs:[], email:'',                      contacto:'',  umbral:25, periodicidad:'Semestral' },
+  { id:'d4', nombre:'Riba Mundo SL',  cif:'B46000004', facturacion:2800000,  empleados:18,  compra:190000, estado:'ok',      revision:'Jun 2025', docs:[], email:'',                      contacto:'',  umbral:25, periodicidad:'Anual' },
+  { id:'d5', nombre:'SCE SL',         cif:'B46000005', facturacion:1900000,  empleados:12,  compra:310000, estado:'warn',    revision:'Dic 2025', docs:[], email:'',                      contacto:'',  umbral:25, periodicidad:'Trimestral' },
+];
+
+// ─── CLAUDE API KEY ───────────────────────────────────────────────────────────
+function getClaudeKey() { return localStorage.getItem('infortisa_claude_key') || ''; }
+
+function guardarClaudeKey() {
+  const k = document.getElementById('cfg-claude-key').value.trim();
+  if (!k) return;
+  localStorage.setItem('infortisa_claude_key', k);
+  const s = document.getElementById('claude-key-status');
+  s.style.display = 'inline';
+  document.getElementById('claude-key-warning').style.display = 'none';
+  setTimeout(() => s.style.display = 'none', 3000);
+}
+
+function borrarClaudeKey() {
+  localStorage.removeItem('infortisa_claude_key');
+  document.getElementById('cfg-claude-key').value = '';
+  showSyncStatus('Clave Claude eliminada', 'warn');
+}
+
+function checkClaudeKeyWarning() {
+  const w = document.getElementById('claude-key-warning');
+  if (w) w.style.display = getClaudeKey() ? 'none' : 'block';
+}
+
+// ─── MSAL — AUTENTICACIÓN MICROSOFT ──────────────────────────────────────────
+async function initMsal() {
+  if (typeof msal === 'undefined') {
+    console.warn('MSAL no cargado');
+    useDemoMode('Modo demo — MSAL no disponible');
+    return;
+  }
+  try {
+    msalApp = new msal.PublicClientApplication({
+      auth: {
+        clientId:    AZURE.clientId,
+        authority:   AZURE.authority,
+        redirectUri: AZURE.redirectUri
+      },
+      cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+    });
+    await msalApp.initialize();
+
+    // Procesar respuesta de redirect (para flujo redirect, no popup)
+    const redirectResp = await msalApp.handleRedirectPromise();
+    if (redirectResp) {
+      updateUserProfile(redirectResp);
+      await cargarProveedoresSP(redirectResp.accessToken);
+      return;
+    }
+
+    const accounts = msalApp.getAllAccounts();
+    if (accounts.length > 0) {
+      updateUserProfile({ account: accounts[0] });
+      await cargarProveedoresSP();
+    } else {
+      document.getElementById('btn-login-ms').style.display = 'flex';
+      useDemoMode('Conecta con Microsoft para cargar datos reales');
+      updateMsStatus('No conectado — pulsa "Conectar Microsoft"', false);
+    }
+  } catch(e) {
+    console.error('Error MSAL:', e);
+    useDemoMode('Error de autenticación — modo demo activo');
+    updateMsStatus('Error: ' + (e.message || e), false);
+  }
+}
+
+async function loginMicrosoft() {
+  if (!msalApp) { showSyncStatus('MSAL no inicializado', 'error'); return; }
+  try {
+    showSyncStatus('⏳ Conectando con Microsoft...', 'info');
+    const resp = await msalApp.loginPopup({ scopes: SCOPES });
+    document.getElementById('btn-login-ms').style.display = 'none';
+    updateUserProfile(resp);
+    await cargarProveedoresSP(resp.accessToken);
+  } catch(e) {
+    console.error('Login error:', e);
+    const msg = e.errorCode === 'popup_window_error'
+      ? 'El navegador bloqueó el popup. Permite popups para esta página.'
+      : e.errorCode === 'redirect_uri_mismatch'
+      ? 'La URL no está registrada en Azure AD. Ve a Configuración para más info.'
+      : (e.errorMessage || e.message || 'Error desconocido');
+    showSyncStatus('Error login: ' + msg, 'error');
+    updateMsStatus('Error: ' + msg, false);
+  }
+}
+
+function updateUserProfile(resp) {
+  const account = resp.account || resp;
+  if (!account) return;
+  const name = account.name || account.username || 'Usuario';
+  const initials = name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  document.getElementById('user-avatar').textContent = initials || 'U';
+  document.getElementById('user-name').textContent = name.split(' ').slice(0, 2).join(' ');
+  document.getElementById('user-role').textContent = account.username || '';
+  updateMsStatus('Conectado como ' + name, true);
+}
+
+function updateMsStatus(msg, ok) {
+  const el = document.getElementById('ms-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--green)' : 'var(--text3)';
+}
+
+async function getToken() {
+  if (!msalApp) return null;
+  const accounts = msalApp.getAllAccounts();
+  if (!accounts.length) return null;
+  try {
+    const resp = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    return resp.accessToken;
+  } catch {
+    try {
+      const resp = await msalApp.acquireTokenPopup({ scopes: SCOPES });
+      return resp.accessToken;
+    } catch(e2) {
+      console.error('acquireToken falló:', e2);
+      return null;
+    }
+  }
+}
+
+async function getSiteId(token) {
+  if (spSiteId) return spSiteId;
+  const resp = await fetch(`https://graph.microsoft.com/v1.0/sites/${SP.sitePath}`, {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  if (!resp.ok) throw new Error('No se pudo acceder al site de SharePoint (HTTP ' + resp.status + '). Comprueba permisos en Azure AD.');
+  const data = await resp.json();
+  spSiteId = data.id;
+  return spSiteId;
+}
+
+// ─── CARGA DE DATOS DESDE SHAREPOINT ─────────────────────────────────────────
+async function cargarProveedoresSP(tokenOverride) {
+  showSyncStatus('⏳ Cargando desde SharePoint...', 'info');
+  try {
+    const token = tokenOverride || await getToken();
+    if (!token) {
+      document.getElementById('btn-login-ms').style.display = 'flex';
+      useDemoMode('Sin autenticación — conecta Microsoft');
+      return;
+    }
+
+    const site = await getSiteId(token);
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive';
+    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500&$orderby=fields/Title`;
+
+    const resp = await fetch(url, {
+      headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' }
+    });
+
+    if (resp.status === 403) throw new Error('Sin permisos. Añade Sites.ReadWrite.All en Azure AD y concede admin consent.');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    const data = await resp.json();
+
+    if (!data.value || data.value.length === 0) {
+      showSyncStatus('⚠ Lista SharePoint vacía — usando datos demo', 'warn');
+      PROVEEDORES = [...DEMO];
+    } else {
+      PROVEEDORES = data.value.map(item => {
+        const f = item.fields || {};
+        const est = (f.Estado || '').toLowerCase();
+        return {
+          id:           item.id,
+          nombre:       f.Title || '—',
+          cif:          f.CIF || '—',
+          email:        f.Email_proveedor || '',
+          contacto:     f.Nombre_contacto || '',
+          facturacion:  parseFloat(f.Facturacion_total) || 0,
+          empleados:    parseInt(f.Empleados) || 0,
+          compra:       parseFloat(f.Compra_Infortisa) || 0,
+          umbral:       parseInt(f.Umbral_pct) || UMBRAL.val,
+          periodicidad: f.Periodicidad || 'Trimestral',
+          revision:     f.Prox_revision
+                          ? new Date(f.Prox_revision).toLocaleDateString('es-ES', { month:'short', year:'numeric' })
+                          : '—',
+          estado:       est === 'activo' ? 'ok' : est === 'alerta' ? 'alerta' : est === 'atención' ? 'warn' : 'pending',
+          estadoRaw:    f.Estado || 'Pendiente',
+          carpeta:      f.Carpeta_OneDrive || '',
+          cnae:         '',
+          docs:         []
+        };
+      });
+      showSyncStatus(`✓ ${PROVEEDORES.length} proveedores cargados · SharePoint real`, 'ok');
+    }
+
+    document.getElementById('btn-login-ms').style.display = 'none';
+    actualizarMetricas();
+    renderAlerts();
+    actualizarSelectProveedores();
+    if (document.getElementById('s-proveedores').style.display !== 'none') renderTablaProveedores(PROVEEDORES);
+    renderChartsCompraYDependencia();
+
+  } catch(e) {
+    console.error('Error cargando SP:', e);
+    showSyncStatus('Error: ' + e.message, 'error');
+    useDemoMode('Error al conectar SharePoint');
+  }
+}
+
+async function recargarDatos() {
+  spSiteId = null;
+  await cargarProveedoresSP();
+}
+
+function useDemoMode(msg) {
+  PROVEEDORES = [...DEMO];
+  showSyncStatus(msg, 'warn');
+  actualizarMetricas();
+  renderAlerts();
+  actualizarSelectProveedores();
+  renderChartsCompraYDependencia();
+}
+
+// ─── GUARDAR PROVEEDOR (SharePoint + Excel) ───────────────────────────────────
+async function guardarProveedor() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { alert('Introduce la razón social'); return; }
+
+  const cif          = document.getElementById('f-cif').value.trim();
+  const email        = document.getElementById('f-email').value.trim();
+  const contacto     = document.getElementById('f-contacto').value.trim();
+  const facturacion  = parseFloat(document.getElementById('f-facturacion').value) || 0;
+  const empleados    = parseInt(document.getElementById('f-empleados').value) || 0;
+  const compra       = parseFloat(document.getElementById('f-compra').value) || 0;
+  const periodicidad = document.getElementById('f-periodicidad').value;
+
+  const statusEl = document.getElementById('guardar-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'var(--accent-bg)';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Guardando proveedor...';
+
+  const token = await getToken();
+
+  if (token) {
+    try {
+      // 1. Escribir en SharePoint List
+      const site = await getSiteId(token);
+      const proxRevision = calcProxRevision(periodicidad);
+
+      const spResp = await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items`, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fields: {
+            Title:            nombre,
+            CIF:              cif,
+            Email_proveedor:  email,
+            Nombre_contacto:  contacto,
+            Facturacion_total: facturacion,
+            Empleados:        empleados,
+            Compra_Infortisa: compra,
+            Umbral_pct:       UMBRAL.val,
+            Periodicidad:     periodicidad,
+            Prox_revision:    proxRevision,
+            Estado:           'Alta_pendiente',
+            Carpeta_OneDrive: `Activos/${nombre}`
+          }
+        })
+      });
+
+      if (!spResp.ok) {
+        const errData = await spResp.json().catch(() => ({}));
+        throw new Error('SharePoint: ' + (errData.error?.message || 'HTTP ' + spResp.status));
+      }
+
+      // 2. Escribir fila en Excel (activa el Flujo A de Power Automate)
+      const excelResp = await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${SP.driveId}/root:/${SP.excelPath}:/workbook/tables/${SP.tableName}/rows/add`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            values: [[nombre, cif, email, contacto, facturacion, empleados, compra, UMBRAL.val, periodicidad, proxRevision, 'Alta_pendiente', `Activos/${nombre}`]]
+          })
+        }
+      );
+
+      const excelOk = excelResp.ok;
+
+      statusEl.style.background = 'var(--green-bg)';
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = excelOk
+        ? `✓ "${nombre}" guardado en SharePoint + Excel. Power Automate procesará el alta automáticamente.`
+        : `✓ "${nombre}" guardado en SharePoint. El Excel no se pudo actualizar automáticamente — actualízalo manualmente para activar Power Automate.`;
+
+      await cargarProveedoresSP(token);
+
+    } catch(e) {
+      console.error(e);
+      statusEl.style.background = 'var(--red-bg)';
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Error: ' + e.message;
+    }
+  } else {
+    // Sin conexión: guardar solo localmente
+    PROVEEDORES.push({
+      id: 'local_' + Date.now(), nombre, cif, email, contacto,
+      facturacion, empleados, compra, umbral: UMBRAL.val, periodicidad,
+      estado: 'pending', revision: '—', docs: []
+    });
+    actualizarMetricas();
+    statusEl.style.background = 'var(--amber-bg)';
+    statusEl.style.color = 'var(--amber)';
+    statusEl.textContent = `"${nombre}" guardado solo localmente (sin conexión). Conecta Microsoft para sincronizar.`;
+  }
+}
+
+function calcProxRevision(periodicidad) {
+  const d = new Date();
+  if (periodicidad === 'Trimestral') d.setMonth(d.getMonth() + 3);
+  else if (periodicidad === 'Semestral') d.setMonth(d.getMonth() + 6);
+  else d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().split('T')[0];
+}
+
+// ─── MÉTRICAS Y UI ────────────────────────────────────────────────────────────
+function actualizarMetricas() {
+  const activos  = PROVEEDORES.filter(p => p.estado === 'ok' || p.estado === 'warn' || p.estado === 'alerta');
+  const alertas  = PROVEEDORES.filter(p => pct(p.compra, p.facturacion) >= UMBRAL.val);
+  const pendientes = PROVEEDORES.filter(p => p.estado === 'pending');
+  const compraTotal = PROVEEDORES.reduce((a, p) => a + p.compra, 0);
+
+  document.getElementById('m-total').textContent = activos.length;
+  document.getElementById('m-total-sub').textContent = PROVEEDORES.length + ' en total';
+  document.getElementById('m-compra').textContent = fmt(compraTotal);
+  document.getElementById('m-alerts').textContent = alertas.length;
+  document.getElementById('m-pending').textContent = pendientes.length;
+
+  const badge = document.getElementById('alerts-badge');
+  if (alertas.length > 0) {
+    badge.textContent = '⚠ ' + alertas.length + ' alerta' + (alertas.length > 1 ? 's' : '');
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function actualizarSelectProveedores() {
+  const sel = document.getElementById('eval-prov');
+  if (!sel) return;
+  sel.innerHTML = PROVEEDORES.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+}
+
+function renderAlerts() {
+  const container = document.getElementById('alert-banners');
+  const alertas = PROVEEDORES.filter(p => pct(p.compra, p.facturacion) >= UMBRAL.val);
+  container.innerHTML = alertas.map(p =>
+    `<div class="alert-banner"><span>⚠</span><span><strong>${p.nombre}</strong> — dependencia ${pct(p.compra, p.facturacion)}% supera el umbral de ${UMBRAL.val}%</span></div>`
+  ).join('');
+}
+
+function renderChartsCompraYDependencia() {
+  ['c-compra','c-depend'].forEach(id => {
+    const ch = Chart.getChart(id);
+    if (ch) ch.destroy();
+  });
+  if (!PROVEEDORES.length) return;
+
+  const top = PROVEEDORES.slice(0, 8);
+  const labels = top.map(p => p.nombre.split(' ')[0]);
+  const compras = top.map(p => Math.round(p.compra / 1000));
+  const depends = top.map(p => pct(p.compra, p.facturacion));
+  const coloresDepend = depends.map(d => d >= UMBRAL.val ? '#dc2626' : d >= UMBRAL.val * 0.8 ? '#b45309' : '#16a34a');
+
+  new Chart(document.getElementById('c-compra'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Compra €K', data: compras, backgroundColor: '#2563eb', borderWidth:0, borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v+'K'}}} }
+  });
+
+  new Chart(document.getElementById('c-depend'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'% depend.', data: depends, backgroundColor: coloresDepend, borderWidth:0, borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v+'%'}}} }
+  });
+}
+
+// ─── TABLA PROVEEDORES ────────────────────────────────────────────────────────
+function renderTablaProveedores(data) {
+  const tbody = document.getElementById('prov-tbody');
+  tbody.innerHTML = data.map(p => {
+    const dep = pct(p.compra, p.facturacion);
+    const pbarColor = dep >= UMBRAL.val ? '#dc2626' : dep >= UMBRAL.val * 0.8 ? '#b45309' : '#16a34a';
+    const badgeClass = p.estado==='ok'?'badge-ok':p.estado==='warn'?'badge-warn':p.estado==='alerta'?'badge-alert':'badge-pending';
+    const badgeText = p.estado==='ok'?'Activo':p.estado==='warn'?'Atención':p.estado==='alerta'?'Alerta':'Alta pendiente';
+    const eurEmp = p.empleados > 0 ? Math.round(p.facturacion / p.empleados / 1000) + 'K' : '—';
+    return `<tr class="clickable" onclick="showFicha('${p.id}')">
+      <td><div class="strong">${p.nombre}</div></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${p.cif}</td>
+      <td style="font-family:var(--mono)">${fmt(p.facturacion)}</td>
+      <td style="font-family:var(--mono)">${p.empleados}</td>
+      <td style="font-family:var(--mono)">${eurEmp}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pbar-wrap"><div class="pbar" style="width:${Math.min(dep/UMBRAL.val*100,100)}%;background:${pbarColor}"></div></div>
+          <span style="font-size:12px;font-family:var(--mono);color:${pbarColor}">${dep}%</span>
+        </div>
+      </td>
+      <td style="font-family:var(--mono)">${fmt(p.compra)}</td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${p.revision}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showFicha('${p.id}')">Ver ficha</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function showFicha(id) {
+  const p = PROVEEDORES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const dep = pct(p.compra, p.facturacion);
+  const depColor = dep >= UMBRAL.val ? 'var(--red)' : dep >= UMBRAL.val * 0.8 ? 'var(--amber)' : 'var(--green)';
+  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF' };
+  const docsHtml = Object.entries(docsMap).map(([k,v]) =>
+    `<div class="doc-item"><span class="doc-name">${v}</span><span class="badge ${p.docs.includes(k)?'badge-ok':'badge-warn'}">${p.docs.includes(k)?'Recibido':'Pendiente'}</span></div>`
+  ).join('');
+  const ficha = document.getElementById('ficha-proveedor');
+  ficha.style.display = 'block';
+  ficha.innerHTML = `<div class="card">
+    <div class="profile-header">
+      <div class="profile-avatar-lg">${p.nombre.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div>
+        <div class="profile-name">${p.nombre}</div>
+        <div class="profile-meta">${p.cif} · ${p.email || 'sin email'}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ficha-proveedor').style.display='none'">Cerrar</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Facturación</div><div class="kpi-val">${fmt(p.facturacion)}</div></div>
+      <div class="kpi"><div class="kpi-label">Empleados</div><div class="kpi-val">${p.empleados}</div></div>
+      <div class="kpi"><div class="kpi-label">€ / empleado</div><div class="kpi-val">${p.empleados>0?Math.round(p.facturacion/p.empleados/1000)+'K':'—'}</div></div>
+      <div class="kpi"><div class="kpi-label">Compra Infortisa</div><div class="kpi-val">${fmt(p.compra)}</div></div>
+      <div class="kpi"><div class="kpi-label">% dependencia</div><div class="kpi-val" style="color:${depColor}">${dep}%</div></div>
+      <div class="kpi"><div class="kpi-label">Próxima revisión</div><div class="kpi-val" style="font-size:14px">${p.revision}</div></div>
+    </div>
+    <div class="sep"></div>
+    <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Documentación compliance</div>
+    <div class="doc-list">${docsHtml}</div>
+  </div>`;
+  ficha.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function filterProveedores(q) {
+  const filtered = PROVEEDORES.filter(p => p.nombre.toLowerCase().includes(q.toLowerCase()) || p.cif.toLowerCase().includes(q.toLowerCase()));
+  renderTablaProveedores(filtered);
+}
+
+// ─── CÁLCULO DEPENDENCIA ──────────────────────────────────────────────────────
+function calcularDependencia() {
+  const f = parseFloat(document.getElementById('f-facturacion').value) || 0;
+  const c = parseFloat(document.getElementById('f-compra').value) || 0;
+  if (!f || !c) { alert('Introduce facturación y compra prevista'); return; }
+  const dep = Math.round(c / f * 100);
+  const ok = dep < UMBRAL.val;
+  document.getElementById('depend-calc').style.display = 'block';
+  document.getElementById('depend-result').innerHTML =
+    `<div style="font-size:22px;font-weight:600;letter-spacing:-1px;color:${ok?'var(--green)':'var(--red)'};margin-bottom:8px">${dep}%</div>
+     <div style="font-size:13px;color:var(--text2);line-height:1.6">
+       Infortisa representaría el <strong>${dep}%</strong> de la facturación de este proveedor.<br>
+       Umbral configurado: <strong>${UMBRAL.val}%</strong> ·
+       ${ok ? '<span style="color:var(--green)">Dentro del límite — alta viable</span>' : '<span style="color:var(--red)">Supera el límite — revisar antes de proceder</span>'}
+     </div>`;
+}
+
+// ─── CLAUDE API ───────────────────────────────────────────────────────────────
+async function callClaude(system, userMsg, maxTokens = 700) {
+  const key = getClaudeKey();
+  if (!key) {
+    checkClaudeKeyWarning();
+    return null;
+  }
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: userMsg }]
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'HTTP ' + resp.status);
+  }
+  const data = await resp.json();
+  return data.content?.[0]?.text || '';
+}
+
+async function generarEmailAuto() {
+  const nombre = document.getElementById('auto-nombre').value.trim() || 'el proveedor';
+  const email  = document.getElementById('auto-email').value.trim();
+  const div     = document.getElementById('email-generado');
+  const content = document.getElementById('email-content');
+  div.style.display = 'block';
+  content.textContent = 'Generando email...';
+  try {
+    const txt = await callClaude(
+      'Eres el asistente de cumplimiento normativo de Infortisa S.L., empresa mayorista de hardware IT en Valencia. Redactas emails profesionales y formales en español. Firma siempre como "Departamento de Administración · Infortisa S.L."',
+      `Redacta un email formal a ${nombre} (${email || 'su email'}) solicitando documentación para nuestro proceso de compliance de proveedores: certificado al corriente con Hacienda, certificado al corriente con la Seguridad Social, y confirmación de facturación total del último ejercicio cerrado. Tono profesional y cordial. Indica que es un proceso estándar y que la información es confidencial. Sin markdown.`,
+      600
+    );
+    content.textContent = txt || 'Configura la clave API de Claude en Configuración para usar esta función.';
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function evaluarCompliance() {
+  const id = document.getElementById('eval-prov').value;
+  const p  = PROVEEDORES.find(x => String(x.id) === String(id)) || PROVEEDORES[0];
+  if (!p) return;
+  const dep = pct(p.compra, p.facturacion);
+  const div = document.getElementById('eval-result');
+  div.style.display = 'block';
+  div.innerHTML = `<div class="loading"><span>Analizando con Claude</span><div class="dot-anim"><span></span><span></span><span></span></div></div>`;
+  try {
+    const txt = await callClaude(
+      'Eres el analista de compliance de Infortisa S.L. Emites dictámenes concisos y ejecutivos sobre proveedores. Formato: párrafo de análisis, veredicto claro (APROBADO / PENDIENTE / RECHAZADO) y máximo 3 recomendaciones. Sin markdown, sin asteriscos.',
+      `Evalúa este proveedor para Infortisa:\nEmpresa: ${p.nombre}\nCIF: ${p.cif}\nFacturación total declarada: ${fmt(p.facturacion)}\nEmpleados: ${p.empleados}\n€/empleado: ${p.empleados>0?Math.round(p.facturacion/p.empleados/1000)+'K':'no disponible'}\nCompra prevista Infortisa: ${fmt(p.compra)}\n% dependencia calculado: ${dep}%\nUmbral máximo Infortisa: ${UMBRAL.val}%\n\nEmite el dictamen de compliance.`,
+      600
+    );
+    if (!txt) { div.innerHTML = `<div style="color:var(--amber);font-size:13px">Configura la clave API de Claude en Configuración.</div>`; return; }
+    const veredicto = txt.includes('APROBADO') ? 'badge-ok' : txt.includes('RECHAZADO') ? 'badge-alert' : 'badge-warn';
+    const veredictoTxt = txt.includes('APROBADO') ? 'APROBADO' : txt.includes('RECHAZADO') ? 'RECHAZADO' : 'PENDIENTE';
+    div.innerHTML = `<div class="card" style="border-color:var(--border2)">
+      <div class="card-title" style="margin-bottom:8px">Dictamen Claude <span class="badge ${veredicto}" style="margin-left:8px">${veredictoTxt}</span></div>
+      <div style="font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-line">${txt}</div>
+    </div>`;
+  } catch(e) {
+    div.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+async function analizarProveedor(id) {
+  const p = PROVEEDORES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  goTo('claude', document.querySelector('.nav-item:nth-child(8)'));
+  document.getElementById('chat-input').value = `Analiza el proveedor ${p.nombre} (CIF: ${p.cif}): facturación ${fmt(p.facturacion)}, ${p.empleados} empleados, compra Infortisa ${fmt(p.compra)}, dependencia calculada ${pct(p.compra,p.facturacion)}%`;
+  setTimeout(sendChat, 300);
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msgs  = document.getElementById('chat-msgs');
+  const text  = input.value.trim();
+  if (!text) return;
+  if (!getClaudeKey()) { checkClaudeKeyWarning(); return; }
+
+  msgs.innerHTML += `<div class="msg msg-user">${text}</div>`;
+  input.value = '';
+  msgs.innerHTML += `<div class="msg msg-claude" id="typing"><strong>Claude</strong><div class="loading"><div class="dot-anim"><span></span><span></span><span></span></div></div></div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const context = `Portfolio de proveedores Infortisa:\n${PROVEEDORES.map(p => `- ${p.nombre} (CIF: ${p.cif}): fact. ${fmt(p.facturacion)}, ${p.empleados} empleados, compra Infortisa ${fmt(p.compra)}, dependencia ${pct(p.compra,p.facturacion)}%, estado: ${p.estadoRaw||p.estado}`).join('\n')}\nUmbral máximo configurado: ${UMBRAL.val}%`;
+
+  try {
+    const txt = await callClaude(
+      `Eres el asesor de compras y compliance de Infortisa S.L., empresa mayorista de hardware IT en Valencia. Tienes acceso al portfolio de proveedores. Respuestas concisas y ejecutivas en español. Sin markdown ni asteriscos.\n\nDatos actuales:\n${context}`,
+      text,
+      600
+    );
+    document.getElementById('typing').innerHTML = `<strong>Claude · Infortisa</strong>${txt || 'Sin respuesta.'}`;
+  } catch(e) {
+    document.getElementById('typing').innerHTML = `<strong>Claude</strong>Error: ${e.message}`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendQuick(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  sendChat();
+}
+
+// ─── MERCADO ──────────────────────────────────────────────────────────────────
+function addRefEmpresa() {
+  const nombre = document.getElementById('ref-nombre').value.trim() || 'Nueva referencia';
+  const fact   = parseInt(document.getElementById('ref-fact').value) || 0;
+  const emp    = parseInt(document.getElementById('ref-emp').value) || 0;
+  const grid   = document.getElementById('ref-grid');
+  const card   = document.createElement('div');
+  card.className = 'compare-card';
+  card.innerHTML = `<div class="compare-name">${nombre}</div>
+    <div class="compare-stat"><span>Fact.</span><span>${fmt(fact)}</span></div>
+    <div class="compare-stat"><span>Empleados</span><span>${emp}</span></div>
+    <div class="compare-stat"><span>€/empl.</span><span>${emp>0?Math.round(fact/emp/1000)+'K':'—'}</span></div>`;
+  grid.appendChild(card);
+  renderMercadoChart();
+}
+
+function renderMercadoChart() {
+  const existing = Chart.getChart('c-mercado');
+  if (existing) existing.destroy();
+  const provData = PROVEEDORES.filter(p => p.empleados > 0).map(p => ({
+    label: p.nombre.split(' ')[0],
+    val: Math.round(p.facturacion / p.empleados / 1000),
+    prov: true
+  }));
+  const refData = [
+    { label:'Ref. A', val: 70.8, prov: false },
+    { label:'Ref. B', val: 90.3, prov: false }
+  ];
+  const all = [...provData, ...refData];
+  new Chart(document.getElementById('c-mercado'), {
+    type: 'bar',
+    data: {
+      labels: all.map(d => d.label),
+      datasets: [{ label:'€K/empleado', data: all.map(d => d.val), backgroundColor: all.map(d => d.prov ? '#2563eb' : '#d1d5db'), borderWidth: 0, borderRadius: 4 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>v+'K'}}} }
+  });
+}
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+function updateUmbral(v) {
+  UMBRAL.val = parseInt(v);
+  document.getElementById('pct-display').textContent = v + '%';
+  document.getElementById('umbral-label').textContent = 'umbral: ' + v + '%';
+  renderAlerts();
+  actualizarMetricas();
+  if (document.getElementById('s-proveedores').style.display !== 'none') renderTablaProveedores(PROVEEDORES);
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [
+    ['Empresa','CIF','Facturación','Empleados','€/empleado','Compra Infortisa','% dependencia','Estado','Próx. revisión'],
+    ...PROVEEDORES.map(p => [p.nombre, p.cif, p.facturacion, p.empleados, p.empleados>0?Math.round(p.facturacion/p.empleados):0, p.compra, pct(p.compra,p.facturacion), p.estadoRaw||p.estado, p.revision])
+  ];
+  const csv = rows.map(r => r.join(';')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+  a.download = 'infortisa_proveedores.csv';
+  a.click();
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
+function goTo(id, btn) {
+  document.querySelectorAll('[id^="s-"]').forEach(s => s.style.display = 'none');
+  document.getElementById('s-' + id).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const titles = { dashboard:'Dashboard', proveedores:'Proveedores', alta:'Alta / Compliance', mercado:'Análisis de mercado', claude:'Consultar a Claude', config:'Configuración' };
+  const subs   = { dashboard:'Resumen general', proveedores:'Gestión del portfolio', alta:'Alta manual y evaluación automática', mercado:'Benchmarking del sector', claude:'Inteligencia artificial sobre tu portfolio', config:'Parámetros del sistema' };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  document.getElementById('page-sub').textContent = subs[id] || '';
+  if (id === 'proveedores') renderTablaProveedores(PROVEEDORES);
+  if (id === 'mercado')     renderMercadoChart();
+  if (id === 'claude')      checkClaudeKeyWarning();
+  if (id === 'config') {
+    const k = getClaudeKey();
+    if (k) document.getElementById('cfg-claude-key').value = k;
+  }
+}
+
+function showTab(tabId, group, btn) {
+  document.querySelectorAll('[data-group="' + group + '"]').forEach(t => t.style.display = 'none');
+  document.getElementById(tabId).style.display = 'block';
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function pct(p, t) { return t > 0 ? Math.round(p / t * 100) : 0; }
+function fmt(n) { return n >= 1000000 ? (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? Math.round(n / 1000) + 'K' : (n || 0).toString(); }
+
+function showSyncStatus(msg, type) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type==='ok' ? 'var(--green)' : type==='error' ? 'var(--red)' : type==='warn' ? 'var(--amber)' : 'var(--text3)';
+  el.style.display = 'block';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  // Mostrar datos demo mientras carga
+  useDemoMode('⏳ Iniciando...');
+
+  // Iniciar autenticación Microsoft
+  await initMsal();
+
+  checkClaudeKeyWarning();
+});
+</script>
+</body>
+</html>
