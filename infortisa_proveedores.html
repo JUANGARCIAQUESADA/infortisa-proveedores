@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <!-- MSAL.js - autenticación Microsoft -->
-<script src="https://alcdn.msauth.net/browser/3.22.0/js/msal-browser.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 <style>
 :root {
   --bg: #f7f6f3;
@@ -687,7 +687,6 @@ async function initMsal() {
       },
       cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
     });
-    await msalApp.initialize();
 
     // Procesar respuesta de redirect (para flujo redirect, no popup)
     const redirectResp = await msalApp.handleRedirectPromise();
