@@ -1355,12 +1355,26 @@ function showSyncStatus(msg, type) {
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
-  // Mostrar datos demo mientras carga
+  // Si esta página se abre dentro del popup de login de MSAL, no arrancar la app
+  if (window.opener && window.opener !== window) {
+    // Solo procesar el redirect de MSAL y cerrar
+    try {
+      const tmp = new msal.PublicClientApplication({
+        auth: {
+          clientId: AZURE.clientId,
+          authority: AZURE.authority,
+          redirectUri: window.location.href.split('?')[0].split('#')[0]
+        }
+      });
+      await tmp.initialize();
+      await tmp.handleRedirectPromise();
+    } catch(e) { /* noop */ }
+    return;
+  }
+
+  // Página principal — arrancar app normal
   useDemoMode('⏳ Iniciando...');
-
-  // Iniciar autenticación Microsoft
   await initMsal();
-
   checkClaudeKeyWarning();
 });
 </script>
