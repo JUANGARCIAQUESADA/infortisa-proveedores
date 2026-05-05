@@ -1228,7 +1228,7 @@ async function cargarProveedoresSP(tokenOverride) {
     }
 
     const site = await getSiteId(token);
-    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion';
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion,Fuente_financiera';
     const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
@@ -1269,7 +1269,8 @@ async function cargarProveedoresSP(tokenOverride) {
           cnae:         '',
           docs:         [],
           pendiente_revision: f.Pendiente_revision || false,
-          ultima_recepcion:   f.Ultima_recepcion || null
+          ultima_recepcion:   f.Ultima_recepcion || null,
+          fuente_financiera:  f.Fuente_financiera || ''
         };
       });
       showSyncStatus(`✓ ${PROVEEDORES.length} proveedores cargados · SharePoint real`, 'ok');
@@ -1583,7 +1584,7 @@ function showFicha(id) {
       </div>
     </div>
     <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-label">Facturación</div><div class="kpi-val">${fmt(p.facturacion)}</div></div>
+      <div class="kpi"><div class="kpi-label">Facturación</div><div class="kpi-val">${fmt(p.facturacion)}</div>${p.fuente_financiera ? `<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px" title="Fuente del dato">📄 ${p.fuente_financiera}</div>` : '<div style="font-size:10px;font-family:var(--mono);color:var(--amber);margin-top:2px">⚠ sin fuente</div>'}</div>
       <div class="kpi"><div class="kpi-label">Empleados</div><div class="kpi-val">${p.empleados}</div></div>
       <div class="kpi"><div class="kpi-label">€ / empleado</div><div class="kpi-val">${p.empleados>0?Math.round(p.facturacion/p.empleados/1000)+'K':'—'}</div></div>
       <div class="kpi"><div class="kpi-label">Compra Infortisa</div><div class="kpi-val">${fmt(p.compra)}</div></div>
@@ -1758,6 +1759,11 @@ async function extraerDatosDB(id, nombre) {
     if (json.resultado_ejercicio!= null) campos.Resultado_ejercicio  = json.resultado_ejercicio;
     if (json.fondos_propios     != null) campos.Fondos_propios       = json.fondos_propios;
     if (json.iva_devengado      != null) campos.IVA_devengado        = json.iva_devengado;
+
+    const tipoLabel = { db:'Informe D&B', cuentas:'Cuentas anuales', m303:'Modelo 303', m322:'Modelo 322' }[tipo];
+    const periodo   = json.ejercicio || json.periodo || '';
+    const fechaHoy  = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' });
+    campos.Fuente_financiera = `${tipoLabel}${periodo ? ' · ' + periodo : ''} · actualizado ${fechaHoy}`;
 
     await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`, {
       method: 'PATCH',
@@ -1945,7 +1951,8 @@ async function guardarEdicion(id) {
         Compra_Infortisa:  parseFloat(document.getElementById('e-compra').value) || 0,
         Periodicidad:      document.getElementById('e-periodicidad').value,
         Estado:            document.getElementById('e-estado').value,
-        Extranjero:        document.getElementById('e-extranjero').checked
+        Extranjero:        document.getElementById('e-extranjero').checked,
+        Fuente_financiera: `Manual · ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' })}`
       })
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
