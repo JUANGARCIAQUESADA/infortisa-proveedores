@@ -349,6 +349,8 @@ select.form-input { cursor: pointer; }
                 <div class="form-group"><label class="form-label">CIF</label><input class="form-input" id="f-cif" placeholder="B-XXXXXXXX"></div>
                 <div class="form-group"><label class="form-label">Email contacto</label><input class="form-input" id="f-email" placeholder="empresa@mail.com"></div>
                 <div class="form-group"><label class="form-label">Nombre contacto</label><input class="form-input" id="f-contacto" placeholder="Nombre Apellido"></div>
+                <div class="form-group"><label class="form-label">Teléfono contacto</label><input class="form-input" id="f-telefono" placeholder="+34 600 000 000"></div>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:20px"><input type="checkbox" id="f-extranjero" style="width:16px;height:16px"><label class="form-label" style="margin:0">Proveedor extranjero (emails en inglés)</label></div>
                 <div class="form-group"><label class="form-label">Facturación total (€)</label><input class="form-input" id="f-facturacion" placeholder="0" type="number"></div>
                 <div class="form-group"><label class="form-label">Núm. empleados</label><input class="form-input" id="f-empleados" placeholder="0" type="number"></div>
               </div>
@@ -790,7 +792,7 @@ async function cargarProveedoresSP(tokenOverride) {
     }
 
     const site = await getSiteId(token);
-    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive';
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive';
     const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
@@ -815,6 +817,8 @@ async function cargarProveedoresSP(tokenOverride) {
           cif:          f.CIF || '—',
           email:        f.Email_proveedor || '',
           contacto:     f.Nombre_contacto || '',
+          telefono:     f.Telefono_contacto || '',
+          extranjero:   f.Extranjero || false,
           facturacion:  parseFloat(f.Facturacion_total) || 0,
           empleados:    parseInt(f.Empleados) || 0,
           compra:       parseFloat(f.Compra_Infortisa) || 0,
@@ -869,6 +873,8 @@ async function guardarProveedor() {
   const cif          = document.getElementById('f-cif').value.trim();
   const email        = document.getElementById('f-email').value.trim();
   const contacto     = document.getElementById('f-contacto').value.trim();
+  const telefono     = document.getElementById('f-telefono').value.trim();
+  const extranjero   = document.getElementById('f-extranjero').checked;
   const facturacion  = parseFloat(document.getElementById('f-facturacion').value) || 0;
   const empleados    = parseInt(document.getElementById('f-empleados').value) || 0;
   const compra       = parseFloat(document.getElementById('f-compra').value) || 0;
@@ -895,18 +901,20 @@ async function guardarProveedor() {
         },
         body: JSON.stringify({
           fields: {
-            Title:            nombre,
-            CIF:              cif,
-            Email_proveedor:  email,
-            Nombre_contacto:  contacto,
-            Facturacion_total: facturacion,
-            Empleados:        empleados,
-            Compra_Infortisa: compra,
-            Umbral_pct:       UMBRAL.val,
-            Periodicidad:     periodicidad,
-            Prox_revision:    proxRevision,
-            Estado:           'Alta_pendiente',
-            Carpeta_OneDrive: `Activos/${nombre}`
+            Title:              nombre,
+            CIF:                cif,
+            Email_proveedor:    email,
+            Nombre_contacto:    contacto,
+            Telefono_contacto:  telefono,
+            Extranjero:         extranjero,
+            Facturacion_total:  facturacion,
+            Empleados:          empleados,
+            Compra_Infortisa:   compra,
+            Umbral_pct:         UMBRAL.val,
+            Periodicidad:       periodicidad,
+            Prox_revision:      proxRevision,
+            Estado:             'Alta_pendiente',
+            Carpeta_OneDrive:   `Activos/${nombre}`
           }
         })
       });
@@ -1056,10 +1064,11 @@ function showFicha(id) {
       <div class="profile-avatar-lg">${p.nombre.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
       <div>
         <div class="profile-name">${p.nombre}</div>
-        <div class="profile-meta">${p.cif} · ${p.email || 'sin email'}</div>
+        <div class="profile-meta">${p.cif} · ${p.email || 'sin email'} ${p.telefono ? '· ' + p.telefono : ''} ${p.extranjero ? '· 🌍 EN' : ''}</div>
       </div>
-      <div style="margin-left:auto;display:flex;gap:8px">
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarProveedor('${id}')">Editar</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="eliminarProveedor('${id}','${p.nombre}')">Eliminar</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ficha-proveedor').style.display='none'">Cerrar</button>
       </div>
@@ -1092,6 +1101,12 @@ function showFicha(id) {
       <button class="btn btn-primary btn-sm" onclick="subirDocumentos('${id}','${p.nombre}')">Subir a SharePoint</button>
     </div>
     <div id="upload-status-${id}" style="margin-top:8px;font-size:13px;display:none"></div>
+    <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Historial de documentos</div>
+      <button class="btn btn-ghost btn-sm" onclick="cargarHistorial('${id}','${p.nombre}')">Cargar historial</button>
+    </div>
+    <div id="historial-${id}" style="font-size:13px;color:var(--text2)">Pulsa "Cargar historial" para ver los documentos guardados en SharePoint.</div>
   </div>`;
   ficha.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
@@ -1154,6 +1169,116 @@ async function eliminarProveedor(id, nombre) {
     await cargarProveedoresSP(token);
   } catch(e) {
     alert('Error al eliminar: ' + e.message);
+  }
+}
+
+function editarProveedor(id) {
+  const p = PROVEEDORES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  const modal = document.createElement('div');
+  modal.id = 'modal-editar';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:var(--bg1);border-radius:12px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:600;margin-bottom:16px">Editar proveedor</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Razón social</label><input class="form-input" id="e-nombre" value="${p.nombre}"></div>
+      <div class="form-group"><label class="form-label">CIF</label><input class="form-input" id="e-cif" value="${p.cif}"></div>
+      <div class="form-group"><label class="form-label">Email contacto</label><input class="form-input" id="e-email" value="${p.email}"></div>
+      <div class="form-group"><label class="form-label">Nombre contacto</label><input class="form-input" id="e-contacto" value="${p.contacto}"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input class="form-input" id="e-telefono" value="${p.telefono}"></div>
+      <div class="form-group"><label class="form-label">Facturación (€)</label><input class="form-input" id="e-facturacion" type="number" value="${p.facturacion}"></div>
+      <div class="form-group"><label class="form-label">Empleados</label><input class="form-input" id="e-empleados" type="number" value="${p.empleados}"></div>
+      <div class="form-group"><label class="form-label">Compra Infortisa (€)</label><input class="form-input" id="e-compra" type="number" value="${p.compra}"></div>
+      <div class="form-group"><label class="form-label">Periodicidad revisión</label>
+        <select class="form-input" id="e-periodicidad">
+          <option ${p.periodicidad==='Mensual'?'selected':''}>Mensual</option>
+          <option ${p.periodicidad==='Trimestral'?'selected':''}>Trimestral</option>
+          <option ${p.periodicidad==='Semestral'?'selected':''}>Semestral</option>
+          <option ${p.periodicidad==='Anual'?'selected':''}>Anual</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Estado</label>
+        <select class="form-input" id="e-estado">
+          <option ${p.estadoRaw==='Alta_pendiente'?'selected':''}>Alta_pendiente</option>
+          <option ${p.estadoRaw==='Activo'?'selected':''}>Activo</option>
+          <option ${p.estadoRaw==='Inactivo'?'selected':''}>Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <input type="checkbox" id="e-extranjero" ${p.extranjero?'checked':''} style="width:16px;height:16px">
+      <label class="form-label" style="margin:0">Proveedor extranjero (emails en inglés)</label>
+    </div>
+    <div id="edit-status" style="margin-top:12px;font-size:13px;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-editar').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEdicion('${id}')">Guardar cambios</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function guardarEdicion(id) {
+  const token = await getToken();
+  if (!token) { alert('Necesitas estar conectado con Microsoft.'); return; }
+  const statusEl = document.getElementById('edit-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Guardando...';
+  try {
+    const site = await getSiteId(token);
+    const resp = await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        Title:             document.getElementById('e-nombre').value.trim(),
+        CIF:               document.getElementById('e-cif').value.trim(),
+        Email_proveedor:   document.getElementById('e-email').value.trim(),
+        Nombre_contacto:   document.getElementById('e-contacto').value.trim(),
+        Telefono_contacto: document.getElementById('e-telefono').value.trim(),
+        Facturacion_total: parseFloat(document.getElementById('e-facturacion').value) || 0,
+        Empleados:         parseInt(document.getElementById('e-empleados').value) || 0,
+        Compra_Infortisa:  parseFloat(document.getElementById('e-compra').value) || 0,
+        Periodicidad:      document.getElementById('e-periodicidad').value,
+        Estado:            document.getElementById('e-estado').value,
+        Extranjero:        document.getElementById('e-extranjero').checked
+      })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Guardado correctamente.';
+    setTimeout(() => { document.getElementById('modal-editar').remove(); cargarProveedoresSP(); }, 1000);
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function cargarHistorial(id, nombre) {
+  const el = document.getElementById('historial-' + id);
+  el.textContent = '⏳ Cargando...';
+  const token = await getToken();
+  if (!token) { el.textContent = 'Necesitas estar conectado con Microsoft.'; return; }
+  try {
+    const site = await getSiteId(token);
+    const driveId = await getDriveId(token, site);
+    const resp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombre}:/children?$orderby=lastModifiedDateTime desc`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    if (!resp.ok) { el.textContent = 'No se encontró la carpeta del proveedor.'; return; }
+    const data = await resp.json();
+    if (!data.value || data.value.length === 0) { el.textContent = 'No hay documentos guardados aún.'; return; }
+    el.innerHTML = data.value.map(f => {
+      const fecha = new Date(f.lastModifiedDateTime).toLocaleDateString('es-ES');
+      const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+'MB' : Math.round(f.size/1024)+'KB';
+      return `<div class="doc-item" style="cursor:pointer" onclick="window.open('${f.webUrl}','_blank')">
+        <span class="doc-name">${f.name}</span>
+        <span style="font-size:11px;color:var(--text3)">${size} · ${fecha}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.textContent = 'Error: ' + e.message;
   }
 }
 
