@@ -1075,8 +1075,51 @@ function showFicha(id) {
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Documentación compliance</div>
     <div class="doc-list">${docsHtml}</div>
+    <div class="sep"></div>
+    <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Subir documento</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="file" id="upload-file-${id}" multiple style="flex:1;font-size:13px;color:var(--text1)">
+      <button class="btn btn-primary btn-sm" onclick="subirDocumentos('${id}','${p.nombre}')">Subir a SharePoint</button>
+    </div>
+    <div id="upload-status-${id}" style="margin-top:8px;font-size:13px;display:none"></div>
   </div>`;
   ficha.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function subirDocumentos(id, nombre) {
+  const input = document.getElementById('upload-file-' + id);
+  const statusEl = document.getElementById('upload-status-' + id);
+  if (!input.files.length) { alert('Selecciona al menos un archivo.'); return; }
+  const token = await getToken();
+  if (!token) { alert('Necesitas estar conectado con Microsoft.'); return; }
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Subiendo...';
+  try {
+    const site = await getSiteId(token);
+    let ok = 0;
+    for (const file of input.files) {
+      const arrayBuffer = await file.arrayBuffer();
+      const resp = await fetch(
+        `https://graph.microsoft.com/v1.0/sites/${site}/drives/${await getDriveId(token, site)}/root:/${nombre}/${file.name}:/content`,
+        { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': file.type || 'application/octet-stream' }, body: arrayBuffer }
+      );
+      if (resp.ok) ok++;
+    }
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ ${ok} archivo(s) subido(s) a la carpeta de ${nombre} en SharePoint.`;
+    input.value = '';
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function getDriveId(token, site) {
+  const resp = await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/drives`, { headers: { Authorization: 'Bearer ' + token } });
+  const data = await resp.json();
+  const docs = data.value.find(d => d.name === 'Documentos compartidos' || d.name === 'Documents');
+  return docs ? docs.id : data.value[0].id;
 }
 
 async function eliminarProveedor(id, nombre) {
