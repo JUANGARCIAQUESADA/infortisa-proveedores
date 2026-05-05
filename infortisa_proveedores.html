@@ -1978,11 +1978,11 @@ async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
     const token = await getToken();
     if (!token) { el.textContent = 'Necesitas estar conectado con Microsoft.'; return; }
     const site = await getSiteId(token);
-    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent('Facturacion_Historica')}/items?$expand=fields&$filter=fields/CIF eq '${cif}'&$top=500`;
+    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent('Facturacion_Historica')}/items?$expand=fields&$top=2000`;
     const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    const rows = (data.value || []).map(i => i.fields);
+    const rows = (data.value || []).map(i => i.fields).filter(f => f.CIF === cif);
     if (!rows.length) { el.textContent = 'Sin datos en Facturacion_Historica para este proveedor.'; return; }
 
     const anuales  = rows.filter(r => r.Tipos === 'Anual').sort((a,b) => a.Ejercicio - b.Ejercicio);
