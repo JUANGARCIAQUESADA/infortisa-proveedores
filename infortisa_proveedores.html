@@ -615,7 +615,7 @@ select.form-input { cursor: pointer; }
             <div class="card-title">OneDrive — estructura de carpetas</div>
             <div style="font-size:12px;font-family:var(--mono);line-height:2;color:var(--text2)">
               📁 Infortisa/Proveedores/<br>
-              &nbsp;&nbsp;📁 _Control/ ← Excel maestro<br>
+              &nbsp;&nbsp;📁 _Control/ ← Datos en SharePoint (lista Proveedores)<br>
               &nbsp;&nbsp;📁 Activos/<br>
               &nbsp;&nbsp;&nbsp;&nbsp;📁 [Nombre proveedor]/<br>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 Informe_comercial.pdf<br>
@@ -1608,6 +1608,12 @@ function showFicha(id) {
       <button class="btn btn-primary btn-sm" onclick="subirDocumentos('${id}','${p.nombre}')">Subir a SharePoint</button>
     </div>
     <div id="upload-status-${id}" style="margin-top:8px;font-size:13px;display:none"></div>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--accent-bg);border-radius:var(--radius-sm);border:1px solid #bfdbfe;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-size:12px;color:var(--accent);flex:1;min-width:200px"><strong>Extraer datos de informe D&B</strong> — sube el PDF y Claude actualizará automáticamente facturación, empleados, sector y scores</div>
+      <input type="file" id="db-file-${id}" accept=".pdf" style="font-size:12px;color:var(--text2)">
+      <button class="btn btn-primary btn-sm" onclick="extraerDatosDB('${id}','${p.nombre}')">Extraer con Claude</button>
+    </div>
+    <div id="db-status-${id}" style="margin-top:6px;font-size:13px;display:none"></div>
     <div class="sep"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Historial de documentos</div>
@@ -1647,6 +1653,83 @@ async function subirDocumentos(id, nombre) {
     statusEl.style.color = 'var(--green)';
     statusEl.textContent = `✓ ${ok} archivo(s) subido(s) como "${tipo}" en la carpeta de ${nombre}.`;
     input.value = '';
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function extraerDatosDB(id, nombre) {
+  const input = document.getElementById('db-file-' + id);
+  const statusEl = document.getElementById('db-status-' + id);
+  if (!input.files.length) { alert('Selecciona el PDF del informe D&B.'); return; }
+  const claudeKey = getClaudeKey();
+  if (!claudeKey) { alert('Configura tu clave API de Claude en Configuración antes de usar esta función.'); return; }
+
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Leyendo PDF y enviando a Claude...';
+
+  try {
+    const file = input.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-opus-4-7',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+            { type: 'text', text: `Extrae del informe Informa D&B los siguientes datos y devuelve SOLO un JSON válido sin texto adicional:
+{
+  "facturacion_total": número en euros o null,
+  "empleados": número entero o null,
+  "sector": texto o null,
+  "cnae": código CNAE o null,
+  "fecha_constitucion": "YYYY-MM-DD" o null,
+  "prob_demora": número porcentaje o null,
+  "score_cese": número o null
+}` }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) throw new Error('Claude API error: ' + resp.status);
+    const data = await resp.json();
+    const texto = data.content[0].text.trim();
+    const json = JSON.parse(texto.replace(/```json|```/g, '').trim());
+
+    // Actualizar en SharePoint
+    const token = await getToken();
+    if (!token) throw new Error('Sin autenticación Microsoft');
+    const site = await getSiteId(token);
+    const campos = {};
+    if (json.facturacion_total != null) campos.Facturacion_total = json.facturacion_total;
+    if (json.empleados != null)         campos.Empleados         = json.empleados;
+    if (json.sector != null)            campos.Sector            = json.sector;
+    if (json.cnae != null)              campos.CNAE              = json.cnae;
+    if (json.fecha_constitucion != null) campos.Fecha_Constitucion = json.fecha_constitucion;
+    if (json.prob_demora != null)       campos.Prob_Demora       = json.prob_demora;
+    if (json.score_cese != null)        campos.Score_Cese        = json.score_cese;
+
+    await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(campos)
+    });
+
+    const resumen = Object.entries(json).filter(([,v]) => v != null).map(([k,v]) => `${k}: ${v}`).join(' · ');
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Datos actualizados en SharePoint — ${resumen}`;
+    input.value = '';
+    setTimeout(() => cargarProveedoresSP(), 2000);
+
   } catch(e) {
     statusEl.style.color = 'var(--red)';
     statusEl.textContent = 'Error: ' + e.message;
