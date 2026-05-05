@@ -1562,7 +1562,7 @@ function showFicha(id) {
   if (!p) return;
   const dep = pct(p.compra, p.facturacion);
   const depColor = dep >= UMBRAL.val ? 'var(--red)' : dep >= UMBRAL.val * 0.8 ? 'var(--amber)' : 'var(--green)';
-  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF', cuentas:'Cuentas anuales auditadas' };
+  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF', cuentas:'Cuentas anuales auditadas', iva303:'Modelo 303 — IVA trimestral', iva322:'Modelo 322 — IVA grupo fiscal' };
   const docsHtml = Object.entries(docsMap).map(([k,v]) =>
     `<div class="doc-item"><span class="doc-name">${v}</span><span class="badge ${p.docs.includes(k)?'badge-ok':'badge-warn'}">${p.docs.includes(k)?'Recibido':'Pendiente'}</span></div>`
   ).join('');
@@ -1978,7 +1978,7 @@ async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
     const token = await getToken();
     if (!token) { el.textContent = 'Necesitas estar conectado con Microsoft.'; return; }
     const site = await getSiteId(token);
-    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/Facturacion_Historica/items?$expand=fields($select=CIF,Ejercicio,Mes,Importe,Tipos)&$filter=fields/CIF eq '${encodeURIComponent(cif)}'&$top=200`;
+    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent('Facturacion_Historica')}/items?$expand=fields&$filter=fields/CIF eq '${cif}'&$top=500`;
     const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
