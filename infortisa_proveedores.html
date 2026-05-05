@@ -1592,6 +1592,12 @@ function showFicha(id) {
       <div class="kpi"><div class="kpi-label">Próxima revisión</div><div class="kpi-val" style="font-size:14px">${p.revision}</div></div>
     </div>
     <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Evolución de facturación</div>
+      <button class="btn btn-ghost btn-sm" onclick="cargarFacturacionHistorica('${p.cif}','${id}',${p.compra})">Cargar histórico</button>
+    </div>
+    <div id="fact-historica-${id}" style="font-size:13px;color:var(--text2)">Pulsa "Cargar histórico" para ver la evolución de facturación.</div>
+    <div class="sep"></div>
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Documentación compliance</div>
     <div class="doc-list">${docsHtml}</div>
     <div class="sep"></div>
@@ -1962,6 +1968,83 @@ async function guardarEdicion(id) {
   } catch(e) {
     statusEl.style.color = 'var(--red)';
     statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
+  const el = document.getElementById('fact-historica-' + id);
+  el.textContent = '⏳ Cargando...';
+  try {
+    const token = await getToken();
+    if (!token) { el.textContent = 'Necesitas estar conectado con Microsoft.'; return; }
+    const site = await getSiteId(token);
+    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/Facturacion_Historica/items?$expand=fields($select=CIF,Ejercicio,Mes,Importe,Tipos)&$filter=fields/CIF eq '${encodeURIComponent(cif)}'&$top=200`;
+    const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const rows = (data.value || []).map(i => i.fields);
+    if (!rows.length) { el.textContent = 'Sin datos en Facturacion_Historica para este proveedor.'; return; }
+
+    const anuales  = rows.filter(r => r.Tipos === 'Anual').sort((a,b) => a.Ejercicio - b.Ejercicio);
+    const ytd      = rows.find(r => r.Tipos === 'YTD');
+    const mensuales = rows.filter(r => r.Tipos === 'Mensual').sort((a,b) => a.Mes - b.Mes);
+
+    const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const añoActual = new Date().getFullYear();
+    const añoAnterior = añoActual - 1;
+    const factAnterior = (anuales.find(r => r.Ejercicio === añoAnterior) || {}).Importe || 0;
+    const factYTD = ytd ? ytd.Importe : 0;
+    const depAnterior = factAnterior > 0 ? Math.round(compraInfortisa / factAnterior * 100) : null;
+    const depYTD      = factYTD      > 0 ? Math.round(compraInfortisa / factYTD      * 100) : null;
+    const umbral = UMBRAL.val;
+
+    const canvasId = 'chart-fact-' + id;
+    const canvasIdM = 'chart-mens-' + id;
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">% DEPENDENCIA ${añoAnterior} (año cerrado)</div>
+          <div style="font-size:22px;font-weight:700;color:${depAnterior===null?'var(--text3)':depAnterior>umbral?'var(--red)':'var(--green)'}">${depAnterior===null?'—':depAnterior+'%'}</div>
+          <div style="font-size:11px;color:var(--text3)">Fact. ${añoAnterior}: ${factAnterior>0?fmt(factAnterior):'sin dato'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:4px">% DEPENDENCIA ${añoActual} (YTD acumulado)</div>
+          <div style="font-size:22px;font-weight:700;color:${depYTD===null?'var(--text3)':depYTD>umbral?'var(--red)':'var(--green)'}">${depYTD===null?'—':depYTD+'%'}</div>
+          <div style="font-size:11px;color:var(--text3)">YTD ${añoActual}: ${factYTD>0?fmt(factYTD):'sin dato'}</div>
+        </div>
+      </div>
+      <div style="height:160px;margin-bottom:12px"><canvas id="${canvasId}"></canvas></div>
+      ${mensuales.length ? `<div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">Mes a mes ${añoActual}</div><div style="height:120px"><canvas id="${canvasIdM}"></canvas></div>` : ''}
+    `;
+
+    // Gráfica anual
+    new Chart(document.getElementById(canvasId), {
+      type: 'bar',
+      data: {
+        labels: [...anuales.map(r => r.Ejercicio), ...(ytd ? [añoActual + ' YTD'] : [])],
+        datasets: [{ label: 'Facturación (€)', data: [...anuales.map(r => r.Importe), ...(ytd ? [ytd.Importe] : [])],
+          backgroundColor: anuales.map(r => r.Ejercicio === añoAnterior ? '#2563eb' : '#93c5fd').concat(ytd ? ['#fbbf24'] : []),
+          borderRadius: 4 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ ticks:{ callback: v => fmt(v) } } } }
+    });
+
+    // Gráfica mensual
+    if (mensuales.length) {
+      new Chart(document.getElementById(canvasIdM), {
+        type: 'line',
+        data: {
+          labels: mensuales.map(r => meses[r.Mes]),
+          datasets: [{ label: 'Facturación mensual', data: mensuales.map(r => r.Importe),
+            borderColor: '#2563eb', backgroundColor: '#eff4ff', fill: true, tension: 0.3, pointRadius: 3 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ ticks:{ callback: v => fmt(v) } } } }
+      });
+    }
+
+  } catch(e) {
+    document.getElementById('fact-historica-' + id).textContent = 'Error: ' + e.message;
   }
 }
 
