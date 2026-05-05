@@ -1983,7 +1983,11 @@ async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     const rows = (data.value || []).map(i => i.fields).filter(f => f.CIF === cif);
-    if (!rows.length) { el.textContent = 'Sin datos en Facturacion_Historica para este proveedor.'; return; }
+    if (!rows.length) {
+      const allCifs = [...new Set((data.value||[]).map(i => i.fields?.CIF || i.fields?.Title || JSON.stringify(Object.keys(i.fields||{}))))];
+      el.textContent = `Sin datos para CIF="${cif}". CIFs en lista: ${allCifs.slice(0,5).join(', ')} (${(data.value||[]).length} filas totales)`;
+      return;
+    }
 
     const anuales  = rows.filter(r => r.Tipos === 'Anual').sort((a,b) => a.Ejercicio - b.Ejercicio);
     const ytd      = rows.find(r => r.Tipos === 'YTD');
