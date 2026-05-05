@@ -627,10 +627,7 @@ const SCOPES = ['User.Read', 'Sites.ReadWrite.All', 'Files.ReadWrite.All'];
 const SP = {
   sitePath: 'iggual.sharepoint.com:/sites/InfortisaProveedores',
   siteUrl:  'https://iggual.sharepoint.com/sites/InfortisaProveedores',
-  listName: 'Proveedores',
-  driveId:  'b!viUKI2qbqkmz7Qjo3_Qe4gkrq95_PIVAviTFRCB1_r36R6wATmlJT5Cg2FxzrsH5',
-  excelPath:'Infortisa/Proveedores/_Control/proveedores_control.xlsx',
-  tableName:'Tabla1'
+  listName: 'Proveedores'
 };
 
 const UMBRAL = { val: 25 };
@@ -864,7 +861,7 @@ function useDemoMode(msg) {
   renderChartsCompraYDependencia();
 }
 
-// ─── GUARDAR PROVEEDOR (SharePoint + Excel) ───────────────────────────────────
+// ─── GUARDAR PROVEEDOR (solo SharePoint) ──────────────────────────────────────
 async function guardarProveedor() {
   const nombre = document.getElementById('f-nombre').value.trim();
   if (!nombre) { alert('Introduce la razón social'); return; }
@@ -887,7 +884,6 @@ async function guardarProveedor() {
 
   if (token) {
     try {
-      // 1. Escribir en SharePoint List
       const site = await getSiteId(token);
       const proxRevision = calcProxRevision(periodicidad);
 
@@ -920,28 +916,9 @@ async function guardarProveedor() {
         throw new Error('SharePoint: ' + (errData.error?.message || 'HTTP ' + spResp.status));
       }
 
-      // 2. Escribir fila en Excel (activa el Flujo A de Power Automate)
-      const excelResp = await fetch(
-        `https://graph.microsoft.com/v1.0/drives/${SP.driveId}/root:/${SP.excelPath}:/workbook/tables/${SP.tableName}/rows/add`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: [[nombre, cif, email, contacto, facturacion, empleados, compra, UMBRAL.val, periodicidad, proxRevision, 'Alta_pendiente', `Activos/${nombre}`]]
-          })
-        }
-      );
-
-      const excelOk = excelResp.ok;
-
       statusEl.style.background = 'var(--green-bg)';
       statusEl.style.color = 'var(--green)';
-      statusEl.textContent = excelOk
-        ? `✓ "${nombre}" guardado en SharePoint + Excel. Power Automate procesará el alta automáticamente.`
-        : `✓ "${nombre}" guardado en SharePoint. El Excel no se pudo actualizar automáticamente — actualízalo manualmente para activar Power Automate.`;
+      statusEl.textContent = `✓ "${nombre}" guardado en SharePoint. Power Automate creará la carpeta y enviará el formulario al proveedor.`;
 
       await cargarProveedoresSP(token);
 
@@ -952,7 +929,6 @@ async function guardarProveedor() {
       statusEl.textContent = 'Error: ' + e.message;
     }
   } else {
-    // Sin conexión: guardar solo localmente
     PROVEEDORES.push({
       id: 'local_' + Date.now(), nombre, cif, email, contacto,
       facturacion, empleados, compra, umbral: UMBRAL.val, periodicidad,
