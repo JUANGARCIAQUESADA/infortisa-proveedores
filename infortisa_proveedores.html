@@ -794,7 +794,7 @@ async function cargarProveedoresSP(tokenOverride) {
 
     const site = await getSiteId(token);
     const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive';
-    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500&$orderby=fields/Title`;
+    const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
       headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' }
