@@ -287,6 +287,8 @@ select.form-input { cursor: pointer; }
 
       <div id="alert-banners"></div>
 
+      <div id="docs-recibidos-banner" style="display:none;margin-bottom:16px"></div>
+
       <div class="charts-row">
         <div class="card">
           <div class="card-title">Compra por proveedor (€K)</div>
@@ -807,7 +809,7 @@ async function cargarProveedoresSP(tokenOverride) {
     }
 
     const site = await getSiteId(token);
-    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive';
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion';
     const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
@@ -846,7 +848,9 @@ async function cargarProveedoresSP(tokenOverride) {
           estadoRaw:    f.Estado || 'Pendiente',
           carpeta:      f.Carpeta_OneDrive || '',
           cnae:         '',
-          docs:         []
+          docs:         [],
+          pendiente_revision: f.Pendiente_revision || false,
+          ultima_recepcion:   f.Ultima_recepcion || null
         };
       });
       showSyncStatus(`✓ ${PROVEEDORES.length} proveedores cargados · SharePoint real`, 'ok');
@@ -855,6 +859,7 @@ async function cargarProveedoresSP(tokenOverride) {
     document.getElementById('btn-login-ms').style.display = 'none';
     actualizarMetricas();
     renderAlerts();
+    renderDocsRecibidos();
     actualizarSelectProveedores();
     if (document.getElementById('s-proveedores').style.display !== 'none') renderTablaProveedores(PROVEEDORES);
     renderChartsCompraYDependencia();
@@ -878,6 +883,73 @@ function useDemoMode(msg) {
   renderAlerts();
   actualizarSelectProveedores();
   renderChartsCompraYDependencia();
+}
+
+// ─── NOTIFICACIONES DOCS RECIBIDOS ────────────────────────────────────────────
+function renderDocsRecibidos() {
+  const banner = document.getElementById('docs-recibidos-banner');
+  const pendientes = PROVEEDORES.filter(p => p.pendiente_revision);
+
+  if (pendientes.length === 0) {
+    banner.style.display = 'none';
+    banner.innerHTML = '';
+    return;
+  }
+
+  const filas = pendientes.map(p => {
+    const fecha = p.ultima_recepcion
+      ? new Date(p.ultima_recepcion).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '—';
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--amber-bg);">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:18px;">📥</span>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${p.nombre}</div>
+            <div style="font-size:11px;color:var(--amber);font-family:var(--mono);">Documentos recibidos · ${fecha}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="verDocumentosPendientes('${p.id}','${p.nombre.replace(/'/g,"\\'")}')">Ver archivos</button>
+          <button class="btn btn-sm" style="background:var(--amber-bg);color:var(--amber);border-color:#fcd34d;" onclick="marcarRevisado('${p.id}')">Marcar revisado ✓</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  banner.style.display = 'block';
+  banner.innerHTML = `
+    <div style="background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:10px 14px;background:#fef3c7;border-bottom:1px solid #fcd34d;font-size:12px;font-family:var(--mono);font-weight:600;color:var(--amber);letter-spacing:0.3px;">
+        DOCUMENTOS RECIBIDOS — ${pendientes.length} proveedor${pendientes.length > 1 ? 'es' : ''} pendiente${pendientes.length > 1 ? 's' : ''} de revisión
+      </div>
+      ${filas}
+    </div>`;
+}
+
+async function marcarRevisado(id) {
+  try {
+    const token = await getToken();
+    if (!token) { alert('Sin autenticación'); return; }
+    const site = await getSiteId(token);
+    await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Pendiente_revision: false })
+      }
+    );
+    const p = PROVEEDORES.find(x => x.id === id);
+    if (p) p.pendiente_revision = false;
+    renderDocsRecibidos();
+  } catch(e) {
+    alert('Error al marcar revisado: ' + e.message);
+  }
+}
+
+async function verDocumentosPendientes(id, nombre) {
+  const p = PROVEEDORES.find(x => x.id === id);
+  if (p) verFichaProveedor(p);
 }
 
 // ─── GUARDAR PROVEEDOR (solo SharePoint) ──────────────────────────────────────
