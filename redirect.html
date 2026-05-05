@@ -5,16 +5,22 @@
 <script src="./msal-browser.min.js"></script>
 <script>
 (async () => {
-  const app = new msal.PublicClientApplication({
-    auth: {
-      clientId: '318410c5-35b5-4246-a34a-4cf86d84965a',
-      authority: 'https://login.microsoftonline.com/98b4a4e1-29ff-45f2-b585-ba2fcb594a88',
-      redirectUri: window.location.href.split('?')[0].split('#')[0]
-    },
-    system: { allowNativeBroker: false }
-  });
-  await app.initialize();
-  await app.handleRedirectPromise();
+  try {
+    const app = new msal.PublicClientApplication({
+      auth: {
+        clientId: '318410c5-35b5-4246-a34a-4cf86d84965a',
+        authority: 'https://login.microsoftonline.com/98b4a4e1-29ff-45f2-b585-ba2fcb594a88',
+        redirectUri: window.location.href.split('?')[0].split('#')[0]
+      },
+      system: { allowNativeBroker: false }
+    });
+    await app.initialize();
+    await app.handleRedirectPromise();
+  } catch(e) {
+    console.log('redirect:', e.message);
+  }
+  // Cerrar el popup tras procesar el auth code
+  setTimeout(() => window.close(), 200);
 })();
 </script>
 </body>
