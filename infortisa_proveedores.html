@@ -725,12 +725,9 @@ async function initMsal() {
 
 async function loginMicrosoft() {
   if (!msalApp) { showSyncStatus('MSAL no inicializado', 'error'); return; }
-  // Limpiar estado anterior
-  Object.keys(sessionStorage).filter(k => k.includes('msal')).forEach(k => sessionStorage.removeItem(k));
   try {
     showSyncStatus('⏳ Redirigiendo a Microsoft...', 'info');
-    // Redirect flow: te lleva a la página de login de Microsoft y vuelve solo
-    await msalApp.loginRedirect({ scopes: SCOPES });
+    await msalApp.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
   } catch(e) {
     console.error('Login error:', e);
     showSyncStatus('Error: ' + (e.errorMessage || e.message || 'Error desconocido'), 'error');
