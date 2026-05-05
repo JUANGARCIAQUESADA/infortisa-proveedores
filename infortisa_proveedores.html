@@ -689,8 +689,14 @@ async function initMsal() {
     });
     await msalApp.initialize();
 
-    // Procesar respuesta de redirect (para flujo redirect, no popup)
-    const redirectResp = await msalApp.handleRedirectPromise();
+    // Procesar respuesta de redirect — ignorar si no hay ninguna
+    let redirectResp = null;
+    try {
+      redirectResp = await msalApp.handleRedirectPromise();
+    } catch(redirErr) {
+      // no_token_request_cache_error es normal cuando se abre la página sin redirect previo
+      console.log('handleRedirectPromise:', redirErr.errorCode || redirErr.message);
+    }
     if (redirectResp) {
       updateUserProfile(redirectResp);
       await cargarProveedoresSP(redirectResp.accessToken);
