@@ -715,6 +715,12 @@ async function initMsal() {
 
 async function loginMicrosoft() {
   if (!msalApp) { showSyncStatus('MSAL no inicializado', 'error'); return; }
+
+  // Limpiar estado anterior si hay interacción bloqueada
+  if (typeof sessionStorage !== 'undefined') {
+    Object.keys(sessionStorage).filter(k => k.includes('msal')).forEach(k => sessionStorage.removeItem(k));
+  }
+
   try {
     showSyncStatus('⏳ Conectando con Microsoft...', 'info');
     const resp = await msalApp.loginPopup({ scopes: SCOPES });
@@ -723,12 +729,15 @@ async function loginMicrosoft() {
     await cargarProveedoresSP(resp.accessToken);
   } catch(e) {
     console.error('Login error:', e);
-    const msg = e.errorCode === 'popup_window_error'
-      ? 'El navegador bloqueó el popup. Permite popups para esta página.'
-      : e.errorCode === 'redirect_uri_mismatch'
-      ? 'La URL no está registrada en Azure AD. Ve a Configuración para más info.'
+    const code = e.errorCode || '';
+    const msg = code === 'popup_window_error'
+      ? 'El navegador bloqueó el popup — permite popups para esta página e inténtalo de nuevo.'
+      : code === 'redirect_uri_mismatch'
+      ? 'La URL no está registrada en Azure AD.'
+      : code.includes('interaction_in_progress')
+      ? 'Sesión anterior bloqueada. Recarga la página (Ctrl+Shift+R) e inténtalo de nuevo.'
       : (e.errorMessage || e.message || 'Error desconocido');
-    showSyncStatus('Error login: ' + msg, 'error');
+    showSyncStatus('Error: ' + msg, 'error');
     updateMsStatus('Error: ' + msg, false);
   }
 }
