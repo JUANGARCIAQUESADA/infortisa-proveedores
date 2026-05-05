@@ -685,7 +685,11 @@ async function initMsal() {
         authority:   AZURE.authority,
         redirectUri: AZURE.redirectUri
       },
-      cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
+      cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false },
+      system: {
+        allowNativeBroker: false,
+        loggerOptions: { logLevel: msal.LogLevel.Warning }
+      }
     });
     await msalApp.initialize();
 
