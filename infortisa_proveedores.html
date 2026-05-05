@@ -733,7 +733,10 @@ async function loginMicrosoft() {
 
   try {
     showSyncStatus('⏳ Conectando con Microsoft...', 'info');
-    const resp = await msalApp.loginPopup({ scopes: SCOPES });
+    const resp = await msalApp.loginPopup({
+      scopes: SCOPES,
+      redirectUri: 'https://juangarciaquesada.github.io/infortisa-proveedores/redirect.html'
+    });
     document.getElementById('btn-login-ms').style.display = 'none';
     updateUserProfile(resp);
     await cargarProveedoresSP(resp.accessToken);
