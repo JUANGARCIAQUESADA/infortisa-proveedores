@@ -244,6 +244,10 @@ select.form-input { cursor: pointer; }
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>
       Configuración
     </button>
+    <button class="nav-item" onclick="goTo('manual', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+      Manual de uso
+    </button>
   </nav>
   <div class="sidebar-footer">
     <div class="profile-pill">
@@ -620,6 +624,419 @@ select.form-input { cursor: pointer; }
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- MANUAL -->
+    <div id="s-manual" style="display:none">
+      <style>
+        .manual-section { margin-bottom: 28px; }
+        .manual-h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); margin-bottom: 6px; }
+        .manual-h2 { font-size: 14px; font-weight: 600; color: var(--accent); margin: 20px 0 8px; display: flex; align-items: center; gap: 8px; }
+        .manual-h2::before { content:''; display:inline-block; width:3px; height:14px; background:var(--accent); border-radius:2px; }
+        .manual-h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 14px 0 6px; }
+        .manual-p { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+        .manual-ol { padding-left: 18px; margin-bottom: 10px; }
+        .manual-ol li { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 4px; }
+        .manual-ul { list-style: none; padding: 0; margin-bottom: 10px; }
+        .manual-ul li { font-size: 13px; color: var(--text2); line-height: 1.7; padding-left: 16px; margin-bottom: 4px; position: relative; }
+        .manual-ul li::before { content: '·'; position: absolute; left: 4px; color: var(--accent); font-weight: 700; }
+        .manual-tag { display: inline-block; font-size: 11px; font-family: var(--mono); background: var(--surface2); color: var(--text2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin: 0 2px; }
+        .manual-badge-ok { background: var(--green-bg); color: var(--green); border-radius: 4px; padding: 1px 7px; font-size: 11px; font-family: var(--mono); }
+        .manual-badge-warn { background: var(--amber-bg); color: var(--amber); border-radius: 4px; padding: 1px 7px; font-size: 11px; font-family: var(--mono); }
+        .manual-badge-alert { background: var(--red-bg); color: var(--red); border-radius: 4px; padding: 1px 7px; font-size: 11px; font-family: var(--mono); }
+        .manual-note { background: var(--accent-bg); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 14px; margin: 10px 0; font-size: 12px; color: var(--text2); line-height: 1.6; }
+        .manual-warn { background: var(--amber-bg); border-left: 3px solid var(--amber); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 14px; margin: 10px 0; font-size: 12px; color: var(--amber); line-height: 1.6; }
+        .manual-flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+        .manual-flow-step { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 10px; font-size: 12px; color: var(--text); font-weight: 500; }
+        .manual-flow-arrow { color: var(--text3); font-size: 14px; }
+        .manual-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+        .manual-index { display: flex; flex-direction: column; gap: 6px; }
+        .manual-index a { font-size: 13px; color: var(--accent); text-decoration: none; cursor: pointer; }
+        .manual-index a:hover { text-decoration: underline; }
+        .manual-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .manual-cols { grid-template-columns: 1fr; } }
+      </style>
+
+      <div style="max-width: 860px;">
+
+        <!-- CABECERA -->
+        <div class="card manual-section">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
+            <div>
+              <div class="manual-h1">Manual del sistema de inteligencia de proveedores</div>
+              <div style="font-size:12px;font-family:var(--mono);color:var(--text3);margin-top:4px">Infortisa S.L. · Dirección de Negocio · v1.1 · 2025</div>
+              <div class="manual-p" style="margin-top:12px">Este sistema centraliza la gestión, compliance y control de proveedores de Infortisa. Combina una aplicación web con flujos automáticos de Power Automate y almacenamiento en SharePoint/OneDrive.</div>
+            </div>
+          </div>
+          <hr class="manual-divider" style="margin:16px 0">
+          <div style="font-size:12px;font-weight:600;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Índice</div>
+          <div class="manual-index">
+            <a onclick="document.getElementById('m-arquitectura').scrollIntoView({behavior:'smooth'})">1. Arquitectura del sistema</a>
+            <a onclick="document.getElementById('m-flujos').scrollIntoView({behavior:'smooth'})">2. Flujos automáticos (Power Automate)</a>
+            <a onclick="document.getElementById('m-alta').scrollIntoView({behavior:'smooth'})">3. Alta de proveedor</a>
+            <a onclick="document.getElementById('m-ficha').scrollIntoView({behavior:'smooth'})">4. Ficha de proveedor</a>
+            <a onclick="document.getElementById('m-documentos').scrollIntoView({behavior:'smooth'})">5. Gestión documental</a>
+            <a onclick="document.getElementById('m-notificaciones').scrollIntoView({behavior:'smooth'})">6. Notificaciones del dashboard</a>
+            <a onclick="document.getElementById('m-claude').scrollIntoView({behavior:'smooth'})">7. Análisis con Claude (IA)</a>
+            <a onclick="document.getElementById('m-dashboard').scrollIntoView({behavior:'smooth'})">8. Dashboard y métricas</a>
+            <a onclick="document.getElementById('m-config').scrollIntoView({behavior:'smooth'})">9. Configuración</a>
+            <a onclick="document.getElementById('m-procedimiento').scrollIntoView({behavior:'smooth'})">10. Procedimiento completo paso a paso</a>
+          </div>
+        </div>
+
+        <!-- 1. ARQUITECTURA -->
+        <div class="card manual-section" id="m-arquitectura">
+          <div class="manual-h2">1. Arquitectura del sistema</div>
+          <div class="manual-p">El sistema tiene tres capas que trabajan juntas de forma automática:</div>
+          <div class="manual-cols">
+            <div>
+              <div class="manual-h3">Aplicación web</div>
+              <div class="manual-p">Alojada en GitHub Pages. Accesible desde cualquier navegador sin instalación. Se autentica con tu cuenta de Microsoft (Azure AD) y lee y escribe directamente en SharePoint mediante la API de Microsoft Graph.</div>
+              <div class="manual-note">URL: <span style="font-family:var(--mono)">juangarciaquesada.github.io/infortisa-proveedores/</span></div>
+            </div>
+            <div>
+              <div class="manual-h3">SharePoint como base de datos</div>
+              <div class="manual-p">La lista <span class="manual-tag">Proveedores</span> en el sitio <span class="manual-tag">InfortisaProveedores</span> es la única fuente de verdad. Todos los datos de proveedores, estados, fechas y flags se guardan ahí.</div>
+              <div class="manual-h3">Power Automate (4 flujos)</div>
+              <div class="manual-p">Automatizan el envío de emails, recepción de documentos, análisis D&B y recordatorios periódicos sin intervención manual.</div>
+            </div>
+          </div>
+          <hr class="manual-divider">
+          <div class="manual-h3">Campos clave en SharePoint</div>
+          <div class="manual-cols">
+            <ul class="manual-ul">
+              <li><span class="manual-tag">Title</span> — Razón social</li>
+              <li><span class="manual-tag">CIF</span> — NIF/CIF del proveedor</li>
+              <li><span class="manual-tag">Email_proveedor</span> — Email de contacto</li>
+              <li><span class="manual-tag">Nombre_contacto</span> — Persona de contacto</li>
+              <li><span class="manual-tag">Telefono_contacto</span> — Teléfono</li>
+              <li><span class="manual-tag">Extranjero</span> — Sí/No (emails en inglés)</li>
+              <li><span class="manual-tag">Facturacion_total</span> — Facturación anual €</li>
+              <li><span class="manual-tag">Empleados</span> — Número de empleados</li>
+            </ul>
+            <ul class="manual-ul">
+              <li><span class="manual-tag">Compra_Infortisa</span> — Compra anual €</li>
+              <li><span class="manual-tag">Umbral_pct</span> — % máximo dependencia</li>
+              <li><span class="manual-tag">Periodicidad</span> — Mensual/Trimestral/Semestral/Anual</li>
+              <li><span class="manual-tag">Prox_revision</span> — Fecha próxima revisión</li>
+              <li><span class="manual-tag">Estado</span> — Activo / Alta_pendiente / Alerta</li>
+              <li><span class="manual-tag">Carpeta_OneDrive</span> — Nombre carpeta documentos</li>
+              <li><span class="manual-tag">Pendiente_revision</span> — Sí/No (docs recibidos)</li>
+              <li><span class="manual-tag">Ultima_recepcion</span> — Fecha último envío</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 2. FLUJOS -->
+        <div class="card manual-section" id="m-flujos">
+          <div class="manual-h2">2. Flujos automáticos (Power Automate)</div>
+
+          <div class="manual-h3">Flujo A — Alta de proveedor</div>
+          <div class="manual-p">Se dispara automáticamente cuando se crea un nuevo elemento en la lista SharePoint de Proveedores.</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Nuevo elemento en SP</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">¿Es nuevo o existente?</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Si nuevo: email de bienvenida + solicitud docs</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Crea carpeta en OneDrive</div>
+          </div>
+          <div class="manual-note"><strong>Si el proveedor es extranjero</strong> (campo Extranjero = Sí), el email se envía en inglés. Si es nuevo, se adjunta el email de compliance completo. Si ya trabajabais con él, solo se envía el recordatorio de carga inicial.</div>
+
+          <hr class="manual-divider">
+          <div class="manual-h3">Flujo B — Revisión periódica</div>
+          <div class="manual-p">Se ejecuta automáticamente cada día. Revisa todos los proveedores y envía recordatorios cuando la fecha de próxima revisión está próxima o vencida.</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Recurrencia diaria</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Obtiene todos los proveedores</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Compara Prox_revision con hoy</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Envía email de recordatorio</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Actualiza Prox_revision + 3 meses</div>
+          </div>
+          <div class="manual-note">La periodicidad de revisión (Mensual/Trimestral/Semestral/Anual) se configura individualmente por proveedor en el momento del alta o desde la ficha de edición.</div>
+
+          <hr class="manual-divider">
+          <div class="manual-h3">Flujo C — Recepción de documentos</div>
+          <div class="manual-p">Se dispara cuando llega un nuevo email a la bandeja con adjuntos de un proveedor. Guarda los archivos en la carpeta de OneDrive del proveedor y activa la alerta en el dashboard.</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Email con adjuntos</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Busca proveedor en SP por email</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Crea archivo en OneDrive</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Marca Pendiente_revision = Sí</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Registra Ultima_recepcion</div>
+          </div>
+          <div class="manual-warn"><strong>Importante:</strong> el email del proveedor debe coincidir exactamente con el campo Email_proveedor en SharePoint para que el flujo lo identifique correctamente.</div>
+
+          <hr class="manual-divider">
+          <div class="manual-h3">Flujo D — Análisis D&B con Claude</div>
+          <div class="manual-p">Lee el informe Informa D&B recibido, lo envía a la API de Claude para extracción de datos y actualiza automáticamente los campos del proveedor en SharePoint.</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Email con informe D&B adjunto</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Extrae PDF en base64</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Envía a Claude API</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Claude extrae: facturación, empleados, sector, CNAE, scores</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Actualiza SP automáticamente</div>
+          </div>
+        </div>
+
+        <!-- 3. ALTA -->
+        <div class="card manual-section" id="m-alta">
+          <div class="manual-h2">3. Alta de proveedor</div>
+          <div class="manual-p">Accede desde <strong>Alta / Compliance</strong> en el menú lateral o desde el botón <span class="manual-tag">+ Nuevo proveedor</span>.</div>
+
+          <div class="manual-h3">Campos del formulario</div>
+          <ul class="manual-ul">
+            <li><strong>Razón social</strong> — nombre completo de la empresa (obligatorio)</li>
+            <li><strong>CIF</strong> — identificador fiscal</li>
+            <li><strong>Email contacto</strong> — dirección a la que se enviarán los emails automáticos</li>
+            <li><strong>Nombre contacto</strong> — persona responsable en el proveedor</li>
+            <li><strong>Teléfono contacto</strong> — teléfono directo</li>
+            <li><strong>Proveedor extranjero</strong> — si está marcado, todos los emails automáticos se envían en inglés</li>
+            <li><strong>Facturación total</strong> — facturación anual de la empresa en euros</li>
+            <li><strong>Núm. empleados</strong> — plantilla actual</li>
+            <li><strong>Compra prevista Infortisa</strong> — importe anual que Infortisa prevé comprarle</li>
+            <li><strong>Periodicidad revisión</strong> — cada cuánto se solicita documentación actualizada</li>
+          </ul>
+
+          <div class="manual-h3">¿Nuevo o existente?</div>
+          <div class="manual-p">Esta opción controla qué hace el Flujo A al crear el proveedor:</div>
+          <ul class="manual-ul">
+            <li><strong>Nuevo proveedor</strong> — se envía email completo de bienvenida y solicitud de compliance + creación de carpeta</li>
+            <li><strong>Proveedor existente</strong> — solo se carga el registro, sin envío de emails (para importar proveedores con los que ya trabajas)</li>
+          </ul>
+
+          <div class="manual-h3">Cálculo de dependencia</div>
+          <div class="manual-p">Usa el botón <span class="manual-tag">Calcular depend.</span> para ver en tiempo real qué porcentaje representa tu compra sobre la facturación total del proveedor. Si supera el umbral configurado (por defecto 25%), se marcará como alerta.</div>
+        </div>
+
+        <!-- 4. FICHA -->
+        <div class="card manual-section" id="m-ficha">
+          <div class="manual-h2">4. Ficha de proveedor</div>
+          <div class="manual-p">Haz clic en cualquier fila de la tabla de proveedores para abrir la ficha completa.</div>
+
+          <div class="manual-h3">Información que muestra</div>
+          <ul class="manual-ul">
+            <li>Datos completos: CIF, email, contacto, teléfono, facturación, empleados, compra</li>
+            <li>Estado de compliance con badge de color (<span class="manual-badge-ok">Activo</span> <span class="manual-badge-warn">Atención</span> <span class="manual-badge-alert">Alerta</span>)</li>
+            <li>Próxima fecha de revisión y periodicidad</li>
+            <li>Historial de documentos recibidos (archivos en OneDrive)</li>
+            <li>Historial de dictámenes de Claude guardados</li>
+          </ul>
+
+          <div class="manual-h3">Acciones disponibles</div>
+          <ul class="manual-ul">
+            <li><strong>Editar proveedor</strong> — modifica cualquier campo (nombre, email, teléfono, periodicidad, etc.) y guarda directamente en SharePoint</li>
+            <li><strong>Subir documentos</strong> — sube archivos PDF/Word/Excel clasificados por tipo (Hacienda, Seguridad Social, CIF, etc.) directamente desde el panel</li>
+            <li><strong>Solicitar documentos</strong> — abre un selector con los 9 tipos de documento disponibles y envía un email formal al proveedor solicitando los que marques</li>
+            <li><strong>Analizar con Claude</strong> — envía los datos del proveedor a Claude para obtener un dictamen de compliance que se guarda como historial</li>
+            <li><strong>Eliminar proveedor</strong> — elimina el registro de SharePoint (pide confirmación). Los documentos en OneDrive se conservan</li>
+          </ul>
+        </div>
+
+        <!-- 5. DOCUMENTOS -->
+        <div class="card manual-section" id="m-documentos">
+          <div class="manual-h2">5. Gestión documental</div>
+
+          <div class="manual-h3">Tipos de documentos del sistema</div>
+          <div class="manual-cols">
+            <ul class="manual-ul">
+              <li>Certificado de Hacienda al corriente</li>
+              <li>Certificado de Seguridad Social al corriente</li>
+              <li>Informe comercial Informa D&B</li>
+              <li>Escritura de constitución</li>
+              <li>Tarjeta CIF</li>
+            </ul>
+            <ul class="manual-ul">
+              <li>Cuentas anuales auditadas</li>
+              <li>Justificante de facturación del último ejercicio</li>
+              <li>Modelo 303 — Declaración trimestral IVA</li>
+              <li>Modelo 322 — Declaración IVA (grupo fiscal)</li>
+            </ul>
+          </div>
+
+          <div class="manual-h3">Subida manual desde el panel</div>
+          <ol class="manual-ol">
+            <li>Abre la ficha del proveedor</li>
+            <li>Haz clic en <span class="manual-tag">Subir documentos</span></li>
+            <li>Selecciona el tipo de documento en el desplegable</li>
+            <li>Selecciona el archivo desde tu equipo</li>
+            <li>El archivo se sube a la carpeta de OneDrive del proveedor con el nombre <span style="font-family:var(--mono);font-size:11px">[tipo]_[fecha]_[nombre].pdf</span></li>
+          </ol>
+
+          <div class="manual-h3">Recepción automática desde email (Flujo C)</div>
+          <ol class="manual-ol">
+            <li>El proveedor responde al email de solicitud adjuntando los documentos</li>
+            <li>Power Automate detecta el email automáticamente</li>
+            <li>Guarda cada adjunto en la carpeta de OneDrive del proveedor</li>
+            <li>Marca al proveedor como pendiente de revisión en SharePoint</li>
+            <li>El dashboard muestra la alerta naranja con el nombre del proveedor</li>
+          </ol>
+
+          <div class="manual-h3">Estructura de carpetas en OneDrive</div>
+          <div style="font-size:12px;font-family:var(--mono);line-height:2;color:var(--text2);background:var(--surface2);border-radius:var(--radius-sm);padding:12px 16px;border:1px solid var(--border)">
+            📁 Documents/<br>
+            &nbsp;&nbsp;📁 [Nombre del proveedor]/<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;📄 hacienda_2025-03-15_cert.pdf<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;📄 ss_2025-03-15_cert.pdf<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;📄 Dictamen_Claude_2025-03-15.txt<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;📄 informe_2025-01-10_dib.pdf
+          </div>
+          <div class="manual-note">El nombre de cada archivo incluye el tipo, la fecha y el nombre original para facilitar su identificación y ordenación cronológica.</div>
+        </div>
+
+        <!-- 6. NOTIFICACIONES -->
+        <div class="card manual-section" id="m-notificaciones">
+          <div class="manual-h2">6. Notificaciones del dashboard</div>
+          <div class="manual-p">Cuando un proveedor envía documentos por email y el Flujo C los procesa, aparece automáticamente un banner naranja en la parte superior del dashboard.</div>
+
+          <div class="manual-h3">Qué muestra el banner</div>
+          <ul class="manual-ul">
+            <li>Nombre del proveedor que ha enviado documentación</li>
+            <li>Fecha y hora de recepción</li>
+            <li>Botón <span class="manual-tag">Ver archivos</span> — abre directamente la ficha del proveedor con el historial de documentos</li>
+            <li>Botón <span class="manual-tag">Marcar revisado</span> — confirma que has revisado los documentos y elimina la alerta</li>
+          </ul>
+
+          <div class="manual-h3">Ciclo de la notificación</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Proveedor envía email con docs</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Flujo C guarda archivos</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">SP: Pendiente_revision = Sí</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Dashboard muestra banner naranja</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Juan revisa y marca revisado</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Banner desaparece</div>
+          </div>
+          <div class="manual-note">El banner se actualiza automáticamente cada vez que recargas el dashboard. Si hay varios proveedores pendientes, aparecen todos en el mismo banner.</div>
+        </div>
+
+        <!-- 7. CLAUDE -->
+        <div class="card manual-section" id="m-claude">
+          <div class="manual-h2">7. Análisis con Claude (IA)</div>
+
+          <div class="manual-h3">Consulta libre (pestaña "Consultar a Claude")</div>
+          <div class="manual-p">Permite hacer preguntas en lenguaje natural sobre el portfolio de proveedores. Claude tiene acceso a todos los datos cargados en el sistema. Ejemplos de consultas:</div>
+          <ul class="manual-ul">
+            <li>¿Qué proveedores están cerca del límite del 25% de dependencia?</li>
+            <li>¿Cuál es el proveedor con mejor ratio facturación/empleado?</li>
+            <li>Resume el estado del portfolio de proveedores</li>
+            <li>¿Qué proveedor representa mayor riesgo de dependencia?</li>
+          </ul>
+          <div class="manual-warn">Requiere configurar la clave API de Claude en <strong>Configuración → API Claude</strong>. La clave se guarda solo en tu navegador, nunca sale de tu equipo.</div>
+
+          <div class="manual-h3">Dictamen de compliance (desde la ficha del proveedor)</div>
+          <div class="manual-p">Al pulsar <span class="manual-tag">Analizar con Claude</span> en la ficha de un proveedor, Claude genera un informe detallado que incluye:</div>
+          <ul class="manual-ul">
+            <li>Evaluación del nivel de dependencia y riesgo</li>
+            <li>Análisis de la salud financiera según los datos disponibles</li>
+            <li>Recomendación de aprobación, revisión o rechazo</li>
+            <li>Alertas específicas si hay campos críticos sin completar</li>
+          </ul>
+          <div class="manual-p">El dictamen se guarda automáticamente como archivo <span style="font-family:var(--mono);font-size:11px">Dictamen_Claude_[fecha].txt</span> en la carpeta del proveedor en OneDrive y queda accesible en el historial de la ficha.</div>
+
+          <div class="manual-h3">Análisis D&B automático (Flujo D)</div>
+          <div class="manual-p">Administración recibe el informe Informa D&B del proveedor y lo reenvía al buzón configurado en el Flujo D. Power Automate extrae el PDF y lo envía a Claude, que identifica y devuelve los campos estructurados: facturación, empleados, sector, CNAE, probabilidad de demora, score de cese y fecha de constitución. Estos datos se escriben automáticamente en SharePoint.</div>
+        </div>
+
+        <!-- 8. DASHBOARD -->
+        <div class="card manual-section" id="m-dashboard">
+          <div class="manual-h2">8. Dashboard y métricas</div>
+
+          <div class="manual-h3">Tarjetas de métricas</div>
+          <div class="manual-cols">
+            <ul class="manual-ul">
+              <li><strong>Proveedores activos</strong> — total de proveedores en estado Activo</li>
+              <li><strong>Compra total anual</strong> — suma de compra Infortisa a todos los proveedores</li>
+            </ul>
+            <ul class="manual-ul">
+              <li><strong>Alertas dependencia</strong> — proveedores que superan el umbral configurado</li>
+              <li><strong>Alta pendiente</strong> — proveedores en proceso de alta aún no completada</li>
+            </ul>
+          </div>
+
+          <div class="manual-h3">Gráficas</div>
+          <ul class="manual-ul">
+            <li><strong>Compra por proveedor (€K)</strong> — barras comparativas de compra anual</li>
+            <li><strong>% dependencia s/ facturación</strong> — barras que muestran qué porcentaje representa la compra de Infortisa sobre la facturación total del proveedor. La línea roja marca el umbral configurado</li>
+          </ul>
+
+          <div class="manual-h3">Alertas de dependencia</div>
+          <div class="manual-p">Aparecen banners de alerta roja para proveedores que superan el umbral de dependencia. El umbral se puede ajustar en Configuración (entre 5% y 50%).</div>
+
+          <div class="manual-h3">Exportación</div>
+          <div class="manual-p">Desde la vista de Proveedores, el botón <span class="manual-tag">Exportar CSV</span> descarga un fichero con todos los datos para análisis externo en Excel.</div>
+        </div>
+
+        <!-- 9. CONFIGURACIÓN -->
+        <div class="card manual-section" id="m-config">
+          <div class="manual-h2">9. Configuración</div>
+          <div class="manual-cols">
+            <div>
+              <div class="manual-h3">% máximo de dependencia</div>
+              <div class="manual-p">Umbral a partir del cual un proveedor se marca en alerta. Por defecto 25%. Ajustable entre 5% y 50% con el deslizador.</div>
+              <div class="manual-h3">API Claude</div>
+              <div class="manual-p">Introduce tu clave <span style="font-family:var(--mono);font-size:11px">sk-ant-api03-...</span> obtenida en <strong>console.anthropic.com</strong>. Se guarda solo en el navegador local (localStorage), no en SharePoint ni en ningún servidor.</div>
+            </div>
+            <div>
+              <div class="manual-h3">Conexión Microsoft</div>
+              <div class="manual-p">Si la sesión expira o ves el botón "Conectar Microsoft" en la barra superior, usa el botón <span class="manual-tag">Reconectar Microsoft</span> para volver a autenticarte. La sesión dura varias horas pero puede caducar.</div>
+              <div class="manual-h3">Recargar datos</div>
+              <div class="manual-p">El botón <span class="manual-tag">⟳ Recargar datos</span> fuerza una nueva consulta a SharePoint para refrescar todos los proveedores.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. PROCEDIMIENTO -->
+        <div class="card manual-section" id="m-procedimiento">
+          <div class="manual-h2">10. Procedimiento completo paso a paso</div>
+
+          <div class="manual-h3">Caso 1 — Alta de un proveedor nuevo</div>
+          <ol class="manual-ol">
+            <li>Ir a <strong>Alta / Compliance → Subida manual</strong></li>
+            <li>Rellenar los datos del proveedor (razón social, CIF, email, contacto, teléfono)</li>
+            <li>Indicar si es <strong>extranjero</strong> (para enviar el email en inglés)</li>
+            <li>Introducir facturación estimada y número de empleados si se conocen</li>
+            <li>Indicar la compra prevista de Infortisa y la periodicidad de revisión</li>
+            <li>Seleccionar <strong>Nuevo proveedor</strong></li>
+            <li>Pulsar <strong>Guardar y activar alta</strong></li>
+            <li><em>Automático:</em> Power Automate envía el email de bienvenida y solicitud de documentos</li>
+            <li><em>Automático:</em> Se crea la carpeta del proveedor en OneDrive</li>
+            <li>Administración recibe el informe D&B y lo reenvía al buzón del Flujo D</li>
+            <li><em>Automático:</em> Claude extrae los datos y los escribe en SharePoint</li>
+            <li>El proveedor envía los documentos por email</li>
+            <li><em>Automático:</em> Flujo C guarda los archivos y activa la alerta en el dashboard</li>
+            <li>Revisar el banner naranja del dashboard, abrir la ficha y pulsar <strong>Marcar revisado</strong></li>
+            <li>Desde la ficha, pulsar <strong>Analizar con Claude</strong> para obtener el dictamen de compliance</li>
+          </ol>
+
+          <hr class="manual-divider">
+
+          <div class="manual-h3">Caso 2 — Revisión periódica de proveedor existente</div>
+          <ol class="manual-ol">
+            <li><em>Automático:</em> El Flujo B detecta que la fecha Prox_revision ha vencido</li>
+            <li><em>Automático:</em> Envía email de recordatorio al proveedor solicitando documentación actualizada</li>
+            <li><em>Automático:</em> Actualiza Prox_revision sumando el periodo configurado</li>
+            <li>Si el proveedor no responde, puedes ir a su ficha y pulsar <strong>Solicitar documentos</strong> manualmente para elegir qué documentos pedir</li>
+            <li>Cuando el proveedor envía los docs, el Flujo C los recibe y activa la alerta</li>
+            <li>Revisar, verificar y marcar como revisado desde el dashboard</li>
+          </ol>
+
+          <hr class="manual-divider">
+
+          <div class="manual-h3">Caso 3 — Carga de proveedor existente sin enviar emails</div>
+          <ol class="manual-ol">
+            <li>Ir a <strong>Alta / Compliance → Subida manual</strong></li>
+            <li>Rellenar todos los datos disponibles del proveedor</li>
+            <li>Seleccionar <strong>Proveedor existente</strong></li>
+            <li>Pulsar <strong>Guardar y activar alta</strong></li>
+            <li>El registro se crea en SharePoint sin ningún envío de emails</li>
+            <li>Subir los documentos que ya tengas manualmente desde la ficha del proveedor</li>
+          </ol>
+
+          <div class="manual-note" style="margin-top:20px"><strong>Resumen de lo que es automático vs manual:</strong><br><br>
+            <strong>Automático (Power Automate):</strong> envío de emails de alta, recordatorios periódicos, recepción y guardado de documentos, extracción de datos del informe D&B, activación de alertas en dashboard.<br><br>
+            <strong>Manual (tú desde la app):</strong> dar de alta proveedores, editar datos, subir documentos puntuales, solicitar docs concretos, revisar y aprobar compliance con Claude, marcar alertas como revisadas.
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1677,8 +2094,8 @@ function goTo(id, btn) {
   document.getElementById('s-' + id).style.display = 'block';
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  const titles = { dashboard:'Dashboard', proveedores:'Proveedores', alta:'Alta / Compliance', mercado:'Análisis de mercado', claude:'Consultar a Claude', config:'Configuración' };
-  const subs   = { dashboard:'Resumen general', proveedores:'Gestión del portfolio', alta:'Alta manual y evaluación automática', mercado:'Benchmarking del sector', claude:'Inteligencia artificial sobre tu portfolio', config:'Parámetros del sistema' };
+  const titles = { dashboard:'Dashboard', proveedores:'Proveedores', alta:'Alta / Compliance', mercado:'Análisis de mercado', claude:'Consultar a Claude', config:'Configuración', manual:'Manual de uso' };
+  const subs   = { dashboard:'Resumen general', proveedores:'Gestión del portfolio', alta:'Alta manual y evaluación automática', mercado:'Benchmarking del sector', claude:'Inteligencia artificial sobre tu portfolio', config:'Parámetros del sistema', manual:'Guía completa del sistema de inteligencia de proveedores' };
   document.getElementById('page-title').textContent = titles[id] || id;
   document.getElementById('page-sub').textContent = subs[id] || '';
   if (id === 'proveedores') renderTablaProveedores(PROVEEDORES);
