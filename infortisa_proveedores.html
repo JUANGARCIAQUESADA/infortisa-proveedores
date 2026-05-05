@@ -1060,6 +1060,7 @@ function showFicha(id) {
       </div>
       <div style="margin-left:auto;display:flex;gap:8px">
         <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="eliminarProveedor('${id}','${p.nombre}')">Eliminar</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ficha-proveedor').style.display='none'">Cerrar</button>
       </div>
     </div>
@@ -1076,6 +1077,25 @@ function showFicha(id) {
     <div class="doc-list">${docsHtml}</div>
   </div>`;
   ficha.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function eliminarProveedor(id, nombre) {
+  if (!confirm(`¿Seguro que quieres eliminar a "${nombre}"? Esta acción no se puede deshacer.`)) return;
+  const token = await getToken();
+  if (!token) { alert('Necesitas estar conectado con Microsoft para eliminar proveedores.'); return; }
+  try {
+    const site = await getSiteId(token);
+    const resp = await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!resp.ok && resp.status !== 204) throw new Error('HTTP ' + resp.status);
+    document.getElementById('ficha-proveedor').style.display = 'none';
+    showSyncStatus(`✓ "${nombre}" eliminado de SharePoint.`, 'info');
+    await cargarProveedoresSP(token);
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
 }
 
 function filterProveedores(q) {
