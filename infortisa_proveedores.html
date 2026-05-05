@@ -381,8 +381,23 @@ select.form-input { cursor: pointer; }
                 <div class="doc-item"><span class="doc-name">Cert. Seguridad Social</span><span class="badge badge-warn">Pendiente</span></div>
                 <div class="doc-item"><span class="doc-name">Escritura de constitución</span><span class="badge badge-warn">Pendiente</span></div>
                 <div class="doc-item"><span class="doc-name">Tarjeta identificativa CIF</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Cuentas anuales auditadas</span><span class="badge badge-warn">Pendiente</span></div>
               </div>
-              <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">La documentación se solicita automáticamente por email al guardar el proveedor (Power Automate).</div>
+            </div>
+            <div class="card mb16" style="border:2px solid var(--accent);background:var(--accent-bg)">
+              <div style="font-size:13px;font-weight:600;margin-bottom:10px">¿Es un proveedor nuevo o ya trabajáis con él?</div>
+              <div style="display:flex;gap:16px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="tipo-alta" id="f-es-nuevo" value="nuevo" checked style="width:15px;height:15px">
+                  <span><strong>Nuevo proveedor</strong> — se envían emails de compliance y se solicita informe D&B</span>
+                </label>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:8px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                  <input type="radio" name="tipo-alta" id="f-es-existente" value="existente" style="width:15px;height:15px">
+                  <span><strong>Proveedor existente</strong> — carga inicial de datos, sin envío de emails</span>
+                </label>
+              </div>
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary" style="flex:1" onclick="guardarProveedor()">Guardar y activar alta</button>
@@ -875,6 +890,7 @@ async function guardarProveedor() {
   const contacto     = document.getElementById('f-contacto').value.trim();
   const telefono     = document.getElementById('f-telefono').value.trim();
   const extranjero   = document.getElementById('f-extranjero').checked;
+  const esNuevo      = document.getElementById('f-es-nuevo').checked;
   const facturacion  = parseFloat(document.getElementById('f-facturacion').value) || 0;
   const empleados    = parseInt(document.getElementById('f-empleados').value) || 0;
   const compra       = parseFloat(document.getElementById('f-compra').value) || 0;
@@ -913,7 +929,8 @@ async function guardarProveedor() {
             Umbral_pct:         UMBRAL.val,
             Periodicidad:       periodicidad,
             Prox_revision:      proxRevision,
-            Estado:             'Alta_pendiente',
+            Estado:             esNuevo ? 'Alta_pendiente' : 'Activo',
+            Es_nuevo:           esNuevo,
             Carpeta_OneDrive:   `Activos/${nombre}`
           }
         })
@@ -1053,7 +1070,7 @@ function showFicha(id) {
   if (!p) return;
   const dep = pct(p.compra, p.facturacion);
   const depColor = dep >= UMBRAL.val ? 'var(--red)' : dep >= UMBRAL.val * 0.8 ? 'var(--amber)' : 'var(--green)';
-  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF' };
+  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF', cuentas:'Cuentas anuales auditadas' };
   const docsHtml = Object.entries(docsMap).map(([k,v]) =>
     `<div class="doc-item"><span class="doc-name">${v}</span><span class="badge ${p.docs.includes(k)?'badge-ok':'badge-warn'}">${p.docs.includes(k)?'Recibido':'Pendiente'}</span></div>`
   ).join('');
@@ -1068,6 +1085,7 @@ function showFicha(id) {
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
+        <button class="btn btn-ghost btn-sm" onclick="solicitarDocumentos('${id}','${p.nombre}','${p.email}','${p.contacto}',${p.extranjero})">Solicitar docs</button>
         <button class="btn btn-ghost btn-sm" onclick="editarProveedor('${id}')">Editar</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="eliminarProveedor('${id}','${p.nombre}')">Eliminar</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ficha-proveedor').style.display='none'">Cerrar</button>
@@ -1169,6 +1187,76 @@ async function eliminarProveedor(id, nombre) {
     await cargarProveedoresSP(token);
   } catch(e) {
     alert('Error al eliminar: ' + e.message);
+  }
+}
+
+function solicitarDocumentos(id, nombre, email, contacto, extranjero) {
+  const docs = [
+    { key: 'hacienda',  es: 'Certificado de Hacienda al corriente',         en: 'Tax clearance certificate' },
+    { key: 'ss',        es: 'Certificado de Seguridad Social al corriente',  en: 'Social Security clearance certificate' },
+    { key: 'informe',   es: 'Informe comercial Informa D&B',                 en: 'Informa D&B commercial report' },
+    { key: 'escritura', es: 'Escritura de constitución',                     en: 'Certificate of incorporation' },
+    { key: 'cif',       es: 'Tarjeta CIF',                                   en: 'Tax identification card (CIF)' },
+    { key: 'cuentas',   es: 'Cuentas anuales auditadas',                     en: 'Audited annual accounts' },
+    { key: 'factura',   es: 'Justificante de facturación del último ejercicio', en: 'Proof of billing for the last fiscal year' }
+  ];
+  const isEn = extranjero === true || extranjero === 'true';
+  const modal = document.createElement('div');
+  modal.id = 'modal-solicitar';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:var(--bg1);border-radius:12px;padding:24px;width:500px;max-width:95vw">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">Solicitar documentos a ${nombre}</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Email: ${email} ${isEn ? '· Idioma: English' : ''}</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px">Selecciona los documentos a solicitar:</div>
+    ${docs.map(d => `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border1)">
+      <input type="checkbox" value="${d.key}" checked style="width:15px;height:15px">
+      <span>${isEn ? d.en : d.es}</span>
+    </label>`).join('')}
+    <div id="solicitar-status" style="margin-top:12px;font-size:13px;display:none"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-solicitar').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarSolicitudDocs('${id}','${nombre}','${email}','${contacto}',${isEn})">Enviar email</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function enviarSolicitudDocs(id, nombre, email, contacto, isEn) {
+  const checkboxes = document.querySelectorAll('#modal-solicitar input[type=checkbox]:checked');
+  if (!checkboxes.length) { alert(isEn ? 'Select at least one document.' : 'Selecciona al menos un documento.'); return; }
+  const statusEl = document.getElementById('solicitar-status');
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = isEn ? '⏳ Sending...' : '⏳ Enviando...';
+  const docsList = Array.from(checkboxes).map((cb, i) => `${i+1}. ${cb.parentElement.querySelector('span').textContent}`).join('\n');
+  const subject = isEn
+    ? `Document request — Infortisa S.L. supplier compliance`
+    : `Solicitud de documentación — Compliance proveedor Infortisa S.L.`;
+  const body = isEn
+    ? `Dear ${contacto},\n\nAs part of our internal compliance process, we kindly request the following documents:\n\n${docsList}\n\nPlease reply to this email attaching the requested documents.\n\nBest regards,\nInfortisa S.L.`
+    : `Estimado/a ${contacto},\n\nEn el marco de nuestro proceso de compliance, le solicitamos la siguiente documentación:\n\n${docsList}\n\nPor favor, responda a este email adjuntando los documentos solicitados.\n\nUn saludo,\nInfortisa S.L.`;
+  const token = await getToken();
+  if (!token) { statusEl.style.color='var(--red)'; statusEl.textContent='Necesitas estar conectado con Microsoft.'; return; }
+  try {
+    const resp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: {
+          subject,
+          body: { contentType: 'Text', content: body },
+          toRecipients: [{ emailAddress: { address: email, name: nombre } }]
+        }
+      })
+    });
+    if (resp.ok || resp.status === 202) {
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = isEn ? '✓ Email sent successfully.' : `✓ Email enviado correctamente a ${email}.`;
+      setTimeout(() => document.getElementById('modal-solicitar').remove(), 2000);
+    } else throw new Error('HTTP ' + resp.status);
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
   }
 }
 
