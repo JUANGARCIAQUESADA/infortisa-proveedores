@@ -1198,7 +1198,9 @@ function solicitarDocumentos(id, nombre, email, contacto, extranjero) {
     { key: 'escritura', es: 'Escritura de constitución',                     en: 'Certificate of incorporation' },
     { key: 'cif',       es: 'Tarjeta CIF',                                   en: 'Tax identification card (CIF)' },
     { key: 'cuentas',   es: 'Cuentas anuales auditadas',                     en: 'Audited annual accounts' },
-    { key: 'factura',   es: 'Justificante de facturación del último ejercicio', en: 'Proof of billing for the last fiscal year' }
+    { key: 'factura',   es: 'Justificante de facturación del último ejercicio', en: 'Proof of billing for the last fiscal year' },
+    { key: 'iva303',    es: 'Modelo 303 — Declaración trimestral IVA',          en: 'Form 303 — Quarterly VAT return' },
+    { key: 'iva322',    es: 'Modelo 322 — Declaración IVA (grupo fiscal)',       en: 'Form 322 — VAT return (tax group)' }
   ];
   const isEn = extranjero === true || extranjero === 'true';
   const modal = document.createElement('div');
