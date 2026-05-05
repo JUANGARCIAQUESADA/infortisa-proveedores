@@ -1989,9 +1989,10 @@ async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
       return;
     }
 
-    const anuales  = rows.filter(r => r.Tipos === 'Anual').sort((a,b) => a.Ejercicio - b.Ejercicio);
-    const ytd      = rows.find(r => r.Tipos === 'YTD');
-    const mensuales = rows.filter(r => r.Tipos === 'Mensual').sort((a,b) => a.Mes - b.Mes);
+    const tipo = r => (r.Tipos || r.TiposValue || '').toString();
+    const anuales   = rows.filter(r => tipo(r) === 'Anual').sort((a,b) => parseInt(a.Ejercicio) - parseInt(b.Ejercicio));
+    const ytd       = rows.find(r => tipo(r) === 'YTD');
+    const mensuales = rows.filter(r => tipo(r) === 'Mensual').sort((a,b) => parseInt(a.Mes) - parseInt(b.Mes));
 
     const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const añoActual = new Date().getFullYear();
