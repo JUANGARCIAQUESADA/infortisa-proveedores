@@ -684,6 +684,7 @@ select.form-input { cursor: pointer; }
             <a onclick="document.getElementById('m-dashboard').scrollIntoView({behavior:'smooth'})">8. Dashboard y métricas</a>
             <a onclick="document.getElementById('m-config').scrollIntoView({behavior:'smooth'})">9. Configuración</a>
             <a onclick="document.getElementById('m-procedimiento').scrollIntoView({behavior:'smooth'})">10. Procedimiento completo paso a paso</a>
+            <a onclick="document.getElementById('m-facturacion').scrollIntoView({behavior:'smooth'})">11. Evolución de facturación histórica</a>
           </div>
         </div>
 
@@ -1034,9 +1035,72 @@ select.form-input { cursor: pointer; }
           </ol>
 
           <div class="manual-note" style="margin-top:20px"><strong>Resumen de lo que es automático vs manual:</strong><br><br>
-            <strong>Automático (Power Automate):</strong> envío de emails de alta, recordatorios periódicos, recepción y guardado de documentos, extracción de datos del informe D&B, activación de alertas en dashboard.<br><br>
-            <strong>Manual (tú desde la app):</strong> dar de alta proveedores, editar datos, subir documentos puntuales, solicitar docs concretos, revisar y aprobar compliance con Claude, marcar alertas como revisadas.
+            <strong>Automático (Power Automate):</strong> envío de emails de alta, recordatorios periódicos, recepción y guardado de documentos, extracción de datos del informe D&B, activación de alertas en dashboard, sincronización mensual de facturación histórica.<br><br>
+            <strong>Manual (tú desde la app):</strong> dar de alta proveedores, editar datos, subir documentos puntuales, solicitar docs concretos, revisar y aprobar compliance con Claude, marcar alertas como revisadas, extraer datos financieros de documentos PDF.
           </div>
+        </div>
+
+        <!-- 11. FACTURACIÓN HISTÓRICA -->
+        <div class="card manual-section" id="m-facturacion">
+          <div class="manual-h2">11. Evolución de facturación histórica</div>
+          <div class="manual-p">Permite visualizar la evolución de la facturación de cada proveedor a lo largo del tiempo y calcular el % de dependencia con datos reales — no estimados.</div>
+
+          <div class="manual-h3">Arquitectura de datos</div>
+          <div class="manual-cols">
+            <div>
+              <div class="manual-h3">Lista SharePoint <span class="manual-tag">Facturacion_Historica</span></div>
+              <ul class="manual-ul">
+                <li><span class="manual-tag">CIF</span> — identifica al proveedor</li>
+                <li><span class="manual-tag">Ejercicio</span> — año (2022, 2023...)</li>
+                <li><span class="manual-tag">Mes</span> — 0 = anual/YTD, 1-12 = meses</li>
+                <li><span class="manual-tag">Importe</span> — euros</li>
+                <li><span class="manual-tag">Tipos</span> — Anual / YTD / Mensual</li>
+              </ul>
+            </div>
+            <div>
+              <div class="manual-h3">Excel <span class="manual-tag">Facturacion_Proveedores.xlsx</span></div>
+              <div class="manual-p">Archivo en <strong>Documentos compartidos</strong> del sitio SharePoint. Contiene los mismos campos. El analista de PBI lo actualiza mensualmente. Power Automate lo lee y sincroniza la lista automáticamente.</div>
+            </div>
+          </div>
+
+          <div class="manual-h3">Flujo E — Sincronizar facturación histórica</div>
+          <div class="manual-p">Se ejecuta el día 1 de cada mes automáticamente.</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Periodicidad mensual</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Lee Excel Facturacion_Proveedores</div><div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Por cada fila crea elemento en Facturacion_Historica</div>
+          </div>
+          <div class="manual-warn">Cada mes se vacía manualmente la lista <strong>Facturacion_Historica</strong> antes de ejecutar el flujo para evitar duplicados. En el futuro se puede automatizar este borrado previo.</div>
+
+          <div class="manual-h3">Qué muestra en la ficha del proveedor</div>
+          <ul class="manual-ul">
+            <li><strong>% Dependencia año anterior</strong> — calculado sobre la facturación anual cerrada del año pasado (dato real)</li>
+            <li><strong>% Dependencia YTD actual</strong> — calculado sobre el acumulado del año en curso a cierre del último mes</li>
+            <li><strong>Gráfica de barras anual</strong> — últimos 3-4 ejercicios + YTD actual en ámbar</li>
+            <li><strong>Gráfica mensual combinada</strong> — barras de facturación mensual del año actual + línea de % dependencia mes a mes (verde si bajo umbral, rojo si lo supera)</li>
+          </ul>
+
+          <div class="manual-h3">Extracción automática de datos financieros con Claude</div>
+          <div class="manual-p">Desde la ficha del proveedor, en el bloque <strong>"Extraer datos financieros con Claude"</strong>, puedes subir un PDF de cualquiera de estos documentos y Claude extraerá y actualizará automáticamente los campos en SharePoint:</div>
+          <div class="manual-cols">
+            <ul class="manual-ul">
+              <li><strong>Informe D&B</strong> — facturación, empleados, sector, CNAE, scores de riesgo</li>
+              <li><strong>Cuentas anuales</strong> — cifra de negocios, empleados, resultado, fondos propios</li>
+            </ul>
+            <ul class="manual-ul">
+              <li><strong>Modelo 303</strong> — base imponible acumulada, IVA devengado</li>
+              <li><strong>Modelo 322</strong> — igual para grupos fiscales</li>
+            </ul>
+          </div>
+          <div class="manual-note">Cada vez que se actualiza la facturación desde un documento, se guarda automáticamente la <strong>fuente y fecha del dato</strong> (ej: "Cuentas anuales · 2024 · actualizado 06 may. 2026") visible bajo el KPI de facturación. Si se edita manualmente, se marca como "Manual · fecha". Así siempre sabes si el cálculo del 25% está basado en datos actuales o desfasados.</div>
+
+          <div class="manual-h3">Procedimiento mensual de actualización</div>
+          <ol class="manual-ol">
+            <li>El analista de PBI actualiza <span class="manual-tag">Facturacion_Proveedores.xlsx</span> con el cierre del mes anterior (YTD actualizado + nueva fila mensual)</li>
+            <li>El día 1 del mes siguiente el Flujo E se ejecuta automáticamente</li>
+            <li>Los datos quedan disponibles en la ficha de cada proveedor pulsando <strong>Cargar histórico</strong></li>
+            <li>El % de dependencia se recalcula automáticamente con los nuevos datos</li>
+          </ol>
         </div>
 
       </div>
