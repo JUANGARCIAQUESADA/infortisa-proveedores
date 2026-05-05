@@ -2035,16 +2035,39 @@ async function cargarFacturacionHistorica(cif, id, compraInfortisa) {
       options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ ticks:{ callback: v => fmt(v) } } } }
     });
 
-    // Gráfica mensual
+    // Gráfica mensual con línea de dependencia
     if (mensuales.length) {
+      const compraMensual = compraInfortisa / 12;
+      const depMensual = mensuales.map(r => r.Importe > 0 ? Math.round(compraMensual / r.Importe * 100) : 0);
       new Chart(document.getElementById(canvasIdM), {
-        type: 'line',
+        type: 'bar',
         data: {
-          labels: mensuales.map(r => meses[r.Mes]),
-          datasets: [{ label: 'Facturación mensual', data: mensuales.map(r => r.Importe),
-            borderColor: '#2563eb', backgroundColor: '#eff4ff', fill: true, tension: 0.3, pointRadius: 3 }]
+          labels: mensuales.map(r => meses[parseInt(r.Mes)]),
+          datasets: [
+            {
+              label: 'Facturación mensual (€)',
+              data: mensuales.map(r => r.Importe),
+              backgroundColor: '#93c5fd', borderRadius: 4, yAxisID: 'y'
+            },
+            {
+              label: '% Dependencia',
+              data: depMensual,
+              type: 'line', borderColor: depMensual.some(d => d > umbral) ? '#dc2626' : '#16a34a',
+              backgroundColor: 'transparent', tension: 0.3, pointRadius: 4,
+              pointBackgroundColor: depMensual.map(d => d > umbral ? '#dc2626' : '#16a34a'),
+              yAxisID: 'y2', borderWidth: 2
+            }
+          ]
         },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ ticks:{ callback: v => fmt(v) } } } }
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            y:  { ticks: { callback: v => fmt(v) }, position: 'left' },
+            y2: { ticks: { callback: v => v + '%' }, position: 'right', grid: { drawOnChartArea: false },
+                  suggestedMin: 0, suggestedMax: Math.max(umbral * 2, Math.max(...depMensual) + 5) }
+          }
+        }
       });
     }
 
