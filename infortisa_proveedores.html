@@ -1077,8 +1077,18 @@ function showFicha(id) {
     <div class="doc-list">${docsHtml}</div>
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Subir documento</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="file" id="upload-file-${id}" multiple style="flex:1;font-size:13px;color:var(--text1)">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="upload-tipo-${id}" class="form-input" style="flex:0 0 220px;font-size:13px">
+        <option value="Certificado_Hacienda">Certificado Hacienda</option>
+        <option value="Certificado_SS">Certificado Seguridad Social</option>
+        <option value="Informe_DB">Informe D&B / Informa</option>
+        <option value="Escritura">Escritura de constitución</option>
+        <option value="Tarjeta_CIF">Tarjeta CIF</option>
+        <option value="Cuentas_Anuales">Cuentas anuales auditadas</option>
+        <option value="Facturacion">Justificante facturación</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <input type="file" id="upload-file-${id}" multiple style="flex:1;font-size:13px;color:var(--text1);min-width:180px">
       <button class="btn btn-primary btn-sm" onclick="subirDocumentos('${id}','${p.nombre}')">Subir a SharePoint</button>
     </div>
     <div id="upload-status-${id}" style="margin-top:8px;font-size:13px;display:none"></div>
@@ -1088,6 +1098,7 @@ function showFicha(id) {
 
 async function subirDocumentos(id, nombre) {
   const input = document.getElementById('upload-file-' + id);
+  const tipo = document.getElementById('upload-tipo-' + id).value;
   const statusEl = document.getElementById('upload-status-' + id);
   if (!input.files.length) { alert('Selecciona al menos un archivo.'); return; }
   const token = await getToken();
@@ -1097,17 +1108,22 @@ async function subirDocumentos(id, nombre) {
   statusEl.textContent = '⏳ Subiendo...';
   try {
     const site = await getSiteId(token);
+    const driveId = await getDriveId(token, site);
+    const fecha = new Date().toISOString().slice(0,10);
     let ok = 0;
     for (const file of input.files) {
+      const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '';
+      const baseName = file.name.includes('.') ? file.name.slice(0, file.name.lastIndexOf('.')) : file.name;
+      const nombreArchivo = `${tipo}_${fecha}_${baseName}${ext}`;
       const arrayBuffer = await file.arrayBuffer();
       const resp = await fetch(
-        `https://graph.microsoft.com/v1.0/sites/${site}/drives/${await getDriveId(token, site)}/root:/${nombre}/${file.name}:/content`,
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombre}/${nombreArchivo}:/content`,
         { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': file.type || 'application/octet-stream' }, body: arrayBuffer }
       );
       if (resp.ok) ok++;
     }
     statusEl.style.color = 'var(--green)';
-    statusEl.textContent = `✓ ${ok} archivo(s) subido(s) a la carpeta de ${nombre} en SharePoint.`;
+    statusEl.textContent = `✓ ${ok} archivo(s) subido(s) como "${tipo}" en la carpeta de ${nombre}.`;
     input.value = '';
   } catch(e) {
     statusEl.style.color = 'var(--red)';
@@ -1229,12 +1245,40 @@ async function evaluarCompliance() {
     if (!txt) { div.innerHTML = `<div style="color:var(--amber);font-size:13px">Configura la clave API de Claude en Configuración.</div>`; return; }
     const veredicto = txt.includes('APROBADO') ? 'badge-ok' : txt.includes('RECHAZADO') ? 'badge-alert' : 'badge-warn';
     const veredictoTxt = txt.includes('APROBADO') ? 'APROBADO' : txt.includes('RECHAZADO') ? 'RECHAZADO' : 'PENDIENTE';
+    const fecha = new Date().toISOString().slice(0,10);
     div.innerHTML = `<div class="card" style="border-color:var(--border2)">
-      <div class="card-title" style="margin-bottom:8px">Dictamen Claude <span class="badge ${veredicto}" style="margin-left:8px">${veredictoTxt}</span></div>
+      <div class="card-title" style="margin-bottom:8px">Dictamen Claude <span class="badge ${veredicto}" style="margin-left:8px">${veredictoTxt}</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:11px" onclick="guardarDictamen('${p.id}','${p.nombre}',\`${txt.replace(/`/g,"'")}\`,'${fecha}')">Guardar en SharePoint</button>
+      </div>
       <div style="font-size:13px;line-height:1.65;color:var(--text2);white-space:pre-line">${txt}</div>
+      <div id="dictamen-save-status" style="margin-top:8px;font-size:12px"></div>
     </div>`;
   } catch(e) {
     div.innerHTML = `<div style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+async function guardarDictamen(id, nombre, texto, fecha) {
+  const token = await getToken();
+  if (!token) { alert('Necesitas estar conectado con Microsoft.'); return; }
+  const statusEl = document.getElementById('dictamen-save-status');
+  statusEl.textContent = '⏳ Guardando...';
+  try {
+    const site = await getSiteId(token);
+    const driveId = await getDriveId(token, site);
+    const contenido = `DICTAMEN DE COMPLIANCE — ${nombre}\nFecha: ${fecha}\n\n${texto}`;
+    const blob = new Blob([contenido], { type: 'text/plain' });
+    const resp = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${nombre}/Dictamen_Claude_${fecha}.txt:/content`,
+      { method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'text/plain' }, body: blob }
+    );
+    if (resp.ok) {
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = `✓ Guardado como "Dictamen_Claude_${fecha}.txt" en la carpeta de ${nombre}.`;
+    } else throw new Error('HTTP ' + resp.status);
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
   }
 }
 
