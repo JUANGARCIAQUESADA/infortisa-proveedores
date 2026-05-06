@@ -3022,6 +3022,8 @@ window.addEventListener('load', async () => {
   useDemoMode('⏳ Iniciando...');
   await initMsal();
   checkClaudeKeyWarning();
+  const tplEl = document.getElementById('cfg-contrato-template');
+  if (tplEl) tplEl.value = getContratoTemplate();
 });
 </script>
 </body>
