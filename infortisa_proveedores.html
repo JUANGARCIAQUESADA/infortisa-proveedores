@@ -428,6 +428,7 @@ select.form-input { cursor: pointer; }
                 <div class="doc-item"><span class="doc-name">Cuentas anuales auditadas</span><span class="badge badge-warn">Pendiente</span></div>
                 <div class="doc-item"><span class="doc-name">Modelo 303 — Declaración trimestral IVA</span><span class="badge badge-warn">Pendiente</span></div>
                 <div class="doc-item"><span class="doc-name">Modelo 322 — Declaración IVA (grupo fiscal)</span><span class="badge badge-warn">Pendiente</span></div>
+                <div class="doc-item"><span class="doc-name">Certificado de titularidad bancaria</span><span class="badge badge-warn">Pendiente</span></div>
               </div>
             </div>
             <div class="card mb16" style="border:2px solid var(--accent);background:var(--accent-bg)">
@@ -1158,6 +1159,75 @@ select.form-input { cursor: pointer; }
           </ol>
         </div>
 
+        <hr class="manual-divider">
+
+        <div class="manual-section">
+          <div class="manual-h2">12. Contrato marco y alta en sistema</div>
+          <div class="manual-p">Una vez revisada toda la documentación de compliance y fijado el límite de compra, el proceso de alta culmina con el envío del contrato al proveedor y la notificación a Administración de Compras.</div>
+
+          <div class="manual-h3">Flujo completo del contrato</div>
+          <div class="manual-flow">
+            <div class="manual-flow-step">Ficha del proveedor</div>
+            <div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Enviar contrato al proveedor</div>
+            <div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Proveedor firma y responde</div>
+            <div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Flujo F guarda PDF + marca Firmado</div>
+            <div class="manual-flow-arrow">→</div>
+            <div class="manual-flow-step">Enviar alta a Adm. Compras</div>
+          </div>
+
+          <div class="manual-h3">Enviar contrato al proveedor</div>
+          <ul class="manual-ul">
+            <li>Entra en la ficha del proveedor → sección <strong>Contrato marco de suministro</strong></li>
+            <li>Pulsa <strong>"Enviar contrato al proveedor"</strong> — la app genera el contrato con los datos del proveedor y lo envía desde <span class="manual-tag">juan@infortisa.com</span></li>
+            <li>El estado cambia a <span class="manual-badge-warn">Enviado — pendiente firma</span></li>
+            <li>El proveedor recibe el contrato por email y lo devuelve firmado como adjunto</li>
+          </ul>
+
+          <div class="manual-h3">Flujo F — Contrato firmado recibido (automático)</div>
+          <ul class="manual-ul">
+            <li>Cuando el proveedor responde con el contrato firmado adjunto, el Flujo F lo detecta automáticamente</li>
+            <li>Guarda el PDF firmado en la carpeta del proveedor en SharePoint</li>
+            <li>Actualiza el campo <span class="manual-tag">Estado_contrato</span> a <strong>Firmado</strong></li>
+            <li>Te envía un aviso por email para que procedas con el alta</li>
+          </ul>
+          <div class="manual-note">El Flujo F identifica al proveedor por su dirección de email. Es importante que el campo <strong>Email_proveedor</strong> en SharePoint coincida exactamente con el email desde el que responde el proveedor.</div>
+
+          <div class="manual-h3">Enviar alta a Administración de Compras</div>
+          <ul class="manual-ul">
+            <li>Una vez el contrato está firmado, en la ficha aparece el botón <strong>"Enviar alta a Adm. Compras"</strong></li>
+            <li>Al pulsarlo se envía un email formateado a <span class="manual-tag">drodrigo@infortisa.com</span> y <span class="manual-tag">ediaz@infortisa.com</span> con todos los datos del proveedor: identificación, contacto, condiciones de pago, IBAN y datos de compliance</li>
+            <li>El estado del proveedor se actualiza automáticamente a <span class="manual-badge-ok">Activo</span></li>
+          </ul>
+
+          <div class="manual-h3">Plantilla de contrato</div>
+          <div class="manual-p">El texto del contrato tipo se puede editar en <strong>Configuración → Plantilla de contrato</strong>. Usa marcadores entre corchetes que se sustituyen automáticamente con los datos de cada proveedor al enviar.</div>
+          <ul class="manual-ul">
+            <li><span class="manual-tag">[NOMBRE_FISCAL]</span> <span class="manual-tag">[CIF]</span> <span class="manual-tag">[DIRECCION]</span> <span class="manual-tag">[CONTACTO]</span> <span class="manual-tag">[CARGO]</span></li>
+            <li><span class="manual-tag">[LIMITE_PCT]</span> <span class="manual-tag">[IMPORTE_LIMITE]</span> <span class="manual-tag">[FORMA_PAGO]</span> <span class="manual-tag">[DIA_PAGO]</span> <span class="manual-tag">[IBAN]</span> <span class="manual-tag">[FECHA]</span></li>
+          </ul>
+        </div>
+
+        <hr class="manual-divider">
+
+        <div class="manual-section">
+          <div class="manual-h2">13. Titularidad bancaria</div>
+          <div class="manual-p">El certificado de titularidad bancaria acredita que la cuenta IBAN facilitada por el proveedor pertenece efectivamente a su empresa. Es un documento obligatorio en el proceso de alta.</div>
+
+          <div class="manual-h3">Solicitarlo a un proveedor</div>
+          <ul class="manual-ul">
+            <li>Entra en la ficha del proveedor → sección <strong>Documentación compliance</strong></li>
+            <li>Pulsa <strong>"Solicitar titularidad bancaria"</strong> — se envía un email automático al proveedor explicando qué es y cómo obtenerlo</li>
+            <li>Cuando lo recibas, súbelo desde la sección <strong>Subir documento</strong> → tipo <strong>"Certificado titularidad bancaria"</strong></li>
+          </ul>
+          <div class="manual-warn"><strong>Importante:</strong> No dar de alta a ningún proveedor en Administración de Compras sin haber recibido y verificado el certificado de titularidad bancaria.</div>
+
+          <div class="manual-h3">En el formulario de Alta</div>
+          <div class="manual-p">El certificado de titularidad bancaria aparece en la lista de documentación requerida junto al resto de documentos de compliance. Se puede solicitar desde la ficha del proveedor en cualquier momento, también a proveedores ya existentes.</div>
+        </div>
+
       </div>
     </div>
 
@@ -1806,7 +1876,7 @@ function showFicha(id) {
   if (!p) return;
   const dep = pct(p.compra, p.facturacion);
   const depColor = dep >= UMBRAL.val ? 'var(--red)' : dep >= UMBRAL.val * 0.8 ? 'var(--amber)' : 'var(--green)';
-  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF', cuentas:'Cuentas anuales auditadas', iva303:'Modelo 303 — IVA trimestral', iva322:'Modelo 322 — IVA grupo fiscal' };
+  const docsMap = { informe:'Informe comercial Informa D&B', hacienda:'Cert. Hacienda', ss:'Cert. Seguridad Social', escritura:'Escritura de constitución', cif:'Tarjeta CIF', cuentas:'Cuentas anuales auditadas', iva303:'Modelo 303 — IVA trimestral', iva322:'Modelo 322 — IVA grupo fiscal', titularidad:'Certificado de titularidad bancaria' };
   const docsHtml = Object.entries(docsMap).map(([k,v]) =>
     `<div class="doc-item"><span class="doc-name">${v}</span><span class="badge ${p.docs.includes(k)?'badge-ok':'badge-warn'}">${p.docs.includes(k)?'Recibido':'Pendiente'}</span></div>`
   ).join('');
@@ -1849,6 +1919,10 @@ function showFicha(id) {
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Documentación compliance</div>
     <div class="doc-list">${docsHtml}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="solicitarTitularidad('${id}','${p.nombre}','${p.email}','${p.contacto}')">Solicitar titularidad bancaria</button>
+    </div>
+    <div id="titularidad-status-${id}" style="margin-top:6px;font-size:13px;display:none"></div>
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Subir documento</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1859,6 +1933,7 @@ function showFicha(id) {
         <option value="Escritura">Escritura de constitución</option>
         <option value="Tarjeta_CIF">Tarjeta CIF</option>
         <option value="Cuentas_Anuales">Cuentas anuales auditadas</option>
+        <option value="Titularidad_Bancaria">Certificado titularidad bancaria</option>
         <option value="Facturacion">Justificante facturación</option>
         <option value="Otro">Otro</option>
       </select>
@@ -2634,6 +2709,47 @@ function showSyncStatus(msg, type) {
   el.textContent = msg;
   el.style.color = type==='ok' ? 'var(--green)' : type==='error' ? 'var(--red)' : type==='warn' ? 'var(--amber)' : 'var(--text3)';
   el.style.display = 'block';
+}
+
+// ─── TITULARIDAD BANCARIA ─────────────────────────────────────────────────────
+async function solicitarTitularidad(id, nombre, email, contacto) {
+  if (!email) { alert('El proveedor no tiene email registrado.'); return; }
+  const statusEl = document.getElementById('titularidad-status-' + id);
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Enviando solicitud...';
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('Necesitas estar conectado a Microsoft');
+    const saludo = contacto ? `Estimado/a ${contacto},` : 'Estimado/a,';
+    const htmlBody = `<p>${saludo}</p>
+<p>En el marco de nuestro proceso de alta y compliance de proveedores, necesitamos que nos haga llegar el <strong>certificado de titularidad bancaria</strong> de la cuenta con la que operará con Infortisa S.L.</p>
+<p>Este certificado puede solicitarlo directamente en su entidad bancaria. Normalmente se emite en el momento y es gratuito.</p>
+<p>Por favor, adjúntelo en su respuesta a este correo a la mayor brevedad posible.</p>
+<p>Quedamos a su disposición para cualquier consulta.<br>
+Un saludo,<br><strong>Juan García Quesada</strong><br>Director de Negocio · Infortisa S.L.<br>juan@infortisa.com</p>`;
+    const mailResp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: {
+          subject: `Solicitud certificado de titularidad bancaria — Infortisa / ${nombre}`,
+          body: { contentType: 'HTML', content: htmlBody },
+          toRecipients: [{ emailAddress: { address: email } }]
+        },
+        saveToSentItems: true
+      })
+    });
+    if (!mailResp.ok) {
+      const err = await mailResp.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'HTTP ' + mailResp.status);
+    }
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Solicitud enviada a ${email}`;
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
 }
 
 // ─── CONTRATO MARCO ───────────────────────────────────────────────────────────
