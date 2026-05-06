@@ -379,7 +379,10 @@ select.form-input { cursor: pointer; }
               <div class="form-grid">
                 <div class="form-group"><label class="form-label">Nombre fiscal (si difiere de razón social)</label><input class="form-input" id="f-nombre-fiscal" placeholder="Razón social completa registrada"></div>
                 <div class="form-group"><label class="form-label">Nombre comercial</label><input class="form-input" id="f-nombre-comercial" placeholder="Marca / nombre comercial"></div>
-                <div class="form-group" style="grid-column:span 2"><label class="form-label">Dirección completa</label><input class="form-input" id="f-direccion" placeholder="Calle, nº, CP, Ciudad, Provincia"></div>
+                <div class="form-group" style="grid-column:span 2"><label class="form-label">Dirección (calle y número)</label><input class="form-input" id="f-direccion" placeholder="Calle Mayor, 10"></div>
+                <div class="form-group"><label class="form-label">Población</label><input class="form-input" id="f-poblacion" placeholder="Localidad"></div>
+                <div class="form-group"><label class="form-label">Ciudad / Provincia</label><input class="form-input" id="f-ciudad" placeholder="Valencia"></div>
+                <div class="form-group"><label class="form-label">País</label><input class="form-input" id="f-pais" placeholder="España"></div>
                 <div class="form-group"><label class="form-label">Web</label><input class="form-input" id="f-web" placeholder="https://www.empresa.com"></div>
                 <div class="form-group"><label class="form-label">Cargo del contacto</label><input class="form-input" id="f-cargo" placeholder="Director comercial"></div>
               </div>
@@ -1524,7 +1527,7 @@ async function cargarProveedoresSP(tokenOverride) {
     }
 
     const site = await getSiteId(token);
-    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion,Fuente_financiera,Nombre_fiscal,Nombre_comercial,Direccion,Web,Forma_pago,Dia_pago,Cuenta_bancaria,Estado_contrato,Cargo_contacto';
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion,Fuente_financiera,Nombre_fiscal,Nombre_comercial,Direccion,Poblacion,Ciudad,Pais,Web,Forma_pago,Dia_pago,Cuenta_bancaria,Estado_contrato,Cargo_contacto';
     const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
@@ -1570,6 +1573,9 @@ async function cargarProveedoresSP(tokenOverride) {
           nombre_fiscal:      f.Nombre_fiscal || f.Title || '',
           nombre_comercial:   f.Nombre_comercial || '',
           direccion:          f.Direccion || '',
+          poblacion:          f.Poblacion || '',
+          ciudad:             f.Ciudad || '',
+          pais:               f.Pais || '',
           web:                f.Web || '',
           forma_pago:         f.Forma_pago || '30 días',
           dia_pago:           f.Dia_pago || '15',
@@ -1732,6 +1738,9 @@ async function guardarProveedor() {
             Nombre_fiscal:      document.getElementById('f-nombre-fiscal').value.trim() || nombre,
             Nombre_comercial:   document.getElementById('f-nombre-comercial').value.trim(),
             Direccion:          document.getElementById('f-direccion').value.trim(),
+            Poblacion:          document.getElementById('f-poblacion').value.trim(),
+            Ciudad:             document.getElementById('f-ciudad').value.trim(),
+            Pais:               document.getElementById('f-pais').value.trim(),
             Web:                document.getElementById('f-web').value.trim(),
             Forma_pago:         document.getElementById('f-forma-pago').value,
             Dia_pago:           document.getElementById('f-dia-pago').value,
@@ -1888,7 +1897,7 @@ function showFicha(id) {
       <div>
         <div class="profile-name">${p.nombre}</div>
         <div class="profile-meta">${p.cif} · ${p.email || 'sin email'} ${p.telefono ? '· ' + p.telefono : ''} ${p.extranjero ? '· 🌍 EN' : ''}</div>
-        ${(p.direccion || p.web) ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">${p.direccion ? '📍 ' + p.direccion : ''} ${p.web ? '· 🌐 <a href="' + p.web + '" target="_blank" style="color:var(--accent)">' + p.web + '</a>' : ''}</div>` : ''}
+        ${(p.direccion || p.poblacion || p.web) ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">${[p.direccion, p.poblacion, p.ciudad, p.pais].filter(Boolean).length ? '📍 ' + [p.direccion, p.poblacion, p.ciudad, p.pais].filter(Boolean).join(', ') : ''} ${p.web ? '· 🌐 <a href="' + p.web + '" target="_blank" style="color:var(--accent)">' + p.web + '</a>' : ''}</div>` : ''}
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
@@ -2826,7 +2835,7 @@ function rellenarContrato(p) {
     .replace(/\[NOMBRE_FISCAL\]/g,    p.nombre_fiscal || p.nombre)
     .replace(/\[NOMBRE_COMERCIAL\]/g, p.nombre_comercial || p.nombre)
     .replace(/\[CIF\]/g,              p.cif)
-    .replace(/\[DIRECCION\]/g,        p.direccion || '—')
+    .replace(/\[DIRECCION\]/g,        [p.direccion, p.poblacion, p.ciudad, p.pais].filter(Boolean).join(', ') || '—')
     .replace(/\[CONTACTO\]/g,         p.contacto || '—')
     .replace(/\[CARGO\]/g,            p.cargo_contacto || 'Representante')
     .replace(/\[EMAIL\]/g,            p.email || '—')
@@ -2919,7 +2928,7 @@ async function enviarAltaAdmin(id) {
     <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600;width:35%">Nombre fiscal</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.nombre_fiscal || p.nombre}</td></tr>
     <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Nombre comercial</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.nombre_comercial || p.nombre}</td></tr>
     <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">CIF</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8;font-family:monospace">${p.cif}</td></tr>
-    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Dirección</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.direccion || '—'}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Dirección</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${[p.direccion, p.poblacion, p.ciudad, p.pais].filter(Boolean).join(', ') || '—'}</td></tr>
     <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Web</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.web || '—'}</td></tr>
   </table>
 
