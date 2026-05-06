@@ -376,6 +376,40 @@ select.form-input { cursor: pointer; }
                   </select>
                 </div>
               </div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Nombre fiscal (si difiere de razón social)</label><input class="form-input" id="f-nombre-fiscal" placeholder="Razón social completa registrada"></div>
+                <div class="form-group"><label class="form-label">Nombre comercial</label><input class="form-input" id="f-nombre-comercial" placeholder="Marca / nombre comercial"></div>
+                <div class="form-group" style="grid-column:span 2"><label class="form-label">Dirección completa</label><input class="form-input" id="f-direccion" placeholder="Calle, nº, CP, Ciudad, Provincia"></div>
+                <div class="form-group"><label class="form-label">Web</label><input class="form-input" id="f-web" placeholder="https://www.empresa.com"></div>
+                <div class="form-group"><label class="form-label">Cargo del contacto</label><input class="form-input" id="f-cargo" placeholder="Director comercial"></div>
+              </div>
+            </div>
+            <div class="card mb16">
+              <div class="card-title">Condiciones de pago</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Forma de pago</label>
+                  <select class="form-input" id="f-forma-pago">
+                    <option value="5 días">5 días</option>
+                    <option value="30 días" selected>30 días</option>
+                    <option value="60 días">60 días</option>
+                    <option value="90 días">90 días</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Día de pago</label>
+                  <select class="form-input" id="f-dia-pago">
+                    <option value="5">Día 5</option>
+                    <option value="15" selected>Día 15</option>
+                    <option value="25">Día 25</option>
+                  </select>
+                </div>
+                <div class="form-group" style="grid-column:span 2">
+                  <label class="form-label">IBAN cuenta bancaria</label>
+                  <input class="form-input" id="f-iban" placeholder="ES00 0000 0000 0000 0000 0000" style="font-family:var(--mono)">
+                </div>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">El plazo se cuenta desde la fecha de entrada de mercancía en almacén de Infortisa.</div>
             </div>
             <div id="depend-calc" class="card mb16" style="display:none">
               <div class="card-title">Cálculo de dependencia</div>
@@ -631,6 +665,23 @@ select.form-input { cursor: pointer; }
           </div>
         </div>
       </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Plantilla de contrato</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+        Texto del contrato tipo enviado a los proveedores. Los marcadores entre corchetes se sustituyen automáticamente con los datos de cada proveedor al enviar.
+      </div>
+      <textarea id="cfg-contrato-template" class="form-input" style="height:320px;resize:vertical;font-size:11px;font-family:var(--mono);line-height:1.6" placeholder="Cargando plantilla..."></textarea>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="guardarContratoTemplate()">Guardar plantilla</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetContratoTemplate()">Restaurar por defecto</button>
+        <span id="contrato-template-status" style="display:none;font-size:11px;color:var(--green)">✓ Plantilla guardada</span>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.8">
+        <strong>Marcadores disponibles:</strong><br>
+        <span style="font-family:var(--mono)">[NOMBRE_FISCAL]</span> · <span style="font-family:var(--mono)">[NOMBRE_COMERCIAL]</span> · <span style="font-family:var(--mono)">[CIF]</span> · <span style="font-family:var(--mono)">[DIRECCION]</span> · <span style="font-family:var(--mono)">[CONTACTO]</span> · <span style="font-family:var(--mono)">[CARGO]</span> · <span style="font-family:var(--mono)">[EMAIL]</span> · <span style="font-family:var(--mono)">[LIMITE_PCT]</span> · <span style="font-family:var(--mono)">[IMPORTE_LIMITE]</span> · <span style="font-family:var(--mono)">[FORMA_PAGO]</span> · <span style="font-family:var(--mono)">[DIA_PAGO]</span> · <span style="font-family:var(--mono)">[IBAN]</span> · <span style="font-family:var(--mono)">[FECHA]</span>
+      </div>
+    </div>
     </div>
 
     <!-- MANUAL -->
@@ -1234,7 +1285,7 @@ const AZURE = {
 
 // Permisos: User.Read (sin consent admin) + Sites.ReadWrite.All + Files.ReadWrite.All
 // Sites.ReadWrite.All y Files.ReadWrite.All requieren que el admin los apruebe en Azure AD
-const SCOPES = ['User.Read', 'Sites.ReadWrite.All', 'Files.ReadWrite.All'];
+const SCOPES = ['User.Read', 'Sites.ReadWrite.All', 'Files.ReadWrite.All', 'Mail.Send'];
 
 // Configuración SharePoint
 const SP = {
@@ -1403,7 +1454,7 @@ async function cargarProveedoresSP(tokenOverride) {
     }
 
     const site = await getSiteId(token);
-    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion,Fuente_financiera';
+    const fields = 'Title,CIF,Email_proveedor,Nombre_contacto,Telefono_contacto,Extranjero,Facturacion_total,Empleados,Compra_Infortisa,Umbral_pct,Periodicidad,Prox_revision,Estado,Carpeta_OneDrive,Pendiente_revision,Ultima_recepcion,Fuente_financiera,Nombre_fiscal,Nombre_comercial,Direccion,Web,Forma_pago,Dia_pago,Cuenta_bancaria,Estado_contrato,Cargo_contacto';
     const url = `https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items?$expand=fields($select=${fields})&$top=500`;
 
     const resp = await fetch(url, {
@@ -1445,7 +1496,16 @@ async function cargarProveedoresSP(tokenOverride) {
           docs:         [],
           pendiente_revision: f.Pendiente_revision || false,
           ultima_recepcion:   f.Ultima_recepcion || null,
-          fuente_financiera:  f.Fuente_financiera || ''
+          fuente_financiera:  f.Fuente_financiera || '',
+          nombre_fiscal:      f.Nombre_fiscal || f.Title || '',
+          nombre_comercial:   f.Nombre_comercial || '',
+          direccion:          f.Direccion || '',
+          web:                f.Web || '',
+          forma_pago:         f.Forma_pago || '30 días',
+          dia_pago:           f.Dia_pago || '15',
+          cuenta_bancaria:    f.Cuenta_bancaria || '',
+          estado_contrato:    f.Estado_contrato || '',
+          cargo_contacto:     f.Cargo_contacto || ''
         };
       });
       showSyncStatus(`✓ ${PROVEEDORES.length} proveedores cargados · SharePoint real`, 'ok');
@@ -1598,7 +1658,16 @@ async function guardarProveedor() {
             Prox_revision:      proxRevision,
             Estado:             esNuevo ? 'Alta_pendiente' : 'Activo',
             Es_nuevo:           esNuevo,
-            Carpeta_OneDrive:   `Activos/${nombre}`
+            Carpeta_OneDrive:   `Activos/${nombre}`,
+            Nombre_fiscal:      document.getElementById('f-nombre-fiscal').value.trim() || nombre,
+            Nombre_comercial:   document.getElementById('f-nombre-comercial').value.trim(),
+            Direccion:          document.getElementById('f-direccion').value.trim(),
+            Web:                document.getElementById('f-web').value.trim(),
+            Forma_pago:         document.getElementById('f-forma-pago').value,
+            Dia_pago:           document.getElementById('f-dia-pago').value,
+            Cuenta_bancaria:    document.getElementById('f-iban').value.trim(),
+            Estado_contrato:    'Pendiente',
+            Cargo_contacto:     document.getElementById('f-cargo').value.trim()
           }
         })
       });
@@ -1749,6 +1818,7 @@ function showFicha(id) {
       <div>
         <div class="profile-name">${p.nombre}</div>
         <div class="profile-meta">${p.cif} · ${p.email || 'sin email'} ${p.telefono ? '· ' + p.telefono : ''} ${p.extranjero ? '· 🌍 EN' : ''}</div>
+        ${(p.direccion || p.web) ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">${p.direccion ? '📍 ' + p.direccion : ''} ${p.web ? '· 🌐 <a href="' + p.web + '" target="_blank" style="color:var(--accent)">' + p.web + '</a>' : ''}</div>` : ''}
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary btn-sm" onclick="analizarProveedor('${id}')">Analizar con Claude</button>
@@ -1766,6 +1836,10 @@ function showFicha(id) {
       <div class="kpi"><div class="kpi-label">% dependencia</div><div class="kpi-val" style="color:${depColor}">${dep}%</div></div>
       <div class="kpi"><div class="kpi-label">Próxima revisión</div><div class="kpi-val" style="font-size:14px">${p.revision}</div></div>
     </div>
+    ${(p.forma_pago || p.cuenta_bancaria) ? `<div style="display:flex;gap:20px;flex-wrap:wrap;padding:10px 0 4px;font-size:12px;color:var(--text2)">
+      ${p.forma_pago ? `<span>💳 Pago a <strong>${p.forma_pago}</strong>, día ${p.dia_pago} · desde entrada en almacén</span>` : ''}
+      ${p.cuenta_bancaria ? `<span style="font-family:var(--mono)">🏦 ${p.cuenta_bancaria}</span>` : ''}
+    </div>` : ''}
     <div class="sep"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Evolución de facturación</div>
@@ -1807,6 +1881,22 @@ function showFicha(id) {
       </div>
     </div>
     <div id="db-status-${id}" style="margin-top:6px;font-size:13px;display:none"></div>
+    <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Contrato marco de suministro</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${p.estado_contrato === 'Firmado'
+          ? `<span class="badge badge-ok">✓ Contrato firmado</span>
+             <button class="btn btn-primary btn-sm" onclick="enviarAltaAdmin('${id}')">Enviar alta a Adm. Compras</button>
+             <button class="btn btn-ghost btn-sm" onclick="enviarContrato('${id}')">Reenviar contrato</button>`
+          : p.estado_contrato === 'Enviado'
+          ? `<span class="badge badge-warn">Enviado — pendiente firma del proveedor</span>
+             <button class="btn btn-ghost btn-sm" onclick="enviarContrato('${id}')">Reenviar contrato</button>`
+          : `<span class="badge badge-pending">No enviado</span>
+             <button class="btn btn-primary btn-sm" onclick="enviarContrato('${id}')">Enviar contrato al proveedor</button>`}
+      </div>
+    </div>
+    <div id="contrato-status-${id}" style="margin-top:6px;font-size:13px;display:none"></div>
     <div class="sep"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="font-size:12px;font-weight:600;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Historial de documentos</div>
@@ -2522,6 +2612,8 @@ function goTo(id, btn) {
   if (id === 'config') {
     const k = getClaudeKey();
     if (k) document.getElementById('cfg-claude-key').value = k;
+    const el = document.getElementById('cfg-contrato-template');
+    if (el) el.value = getContratoTemplate();
   }
 }
 
@@ -2542,6 +2634,244 @@ function showSyncStatus(msg, type) {
   el.textContent = msg;
   el.style.color = type==='ok' ? 'var(--green)' : type==='error' ? 'var(--red)' : type==='warn' ? 'var(--amber)' : 'var(--text3)';
   el.style.display = 'block';
+}
+
+// ─── CONTRATO MARCO ───────────────────────────────────────────────────────────
+const CONTRATO_DEFAULT = `CONTRATO MARCO DE SUMINISTRO
+
+Entre las partes:
+
+De una parte, INFORTISA, S.L., con CIF B-XXXXXXXX, domicilio social en Valencia, inscrita en el Registro Mercantil de Valencia, representada por D. Juan García Quesada en calidad de Director de Negocio (en adelante, "INFORTISA").
+
+De otra parte, [NOMBRE_FISCAL], con CIF [CIF], domicilio social en [DIRECCION], representada por [CONTACTO] en calidad de [CARGO] (en adelante, el "PROVEEDOR").
+
+Ambas partes se reconocen mutuamente capacidad legal suficiente para suscribir el presente contrato y acuerdan las siguientes:
+
+CLÁUSULAS
+
+PRIMERA — Objeto
+El presente contrato regula las condiciones generales bajo las cuales el PROVEEDOR suministrará productos y/o servicios a INFORTISA, quedando ambas partes obligadas a su cumplimiento durante la vigencia del acuerdo.
+
+SEGUNDA — Volumen de compra
+El volumen de compra anual de INFORTISA al PROVEEDOR no superará el [LIMITE_PCT]% de la facturación total declarada del PROVEEDOR, con el fin de preservar la independencia comercial de ambas partes. Este límite queda fijado en un máximo de [IMPORTE_LIMITE] € anuales para el ejercicio en curso, revisable anualmente.
+
+TERCERA — Condiciones de pago
+Los pagos se realizarán a [FORMA_PAGO] desde la fecha de entrada de la mercancía en el almacén de INFORTISA, con vencimiento los días [DIA_PAGO] del mes correspondiente.
+La forma de pago será mediante transferencia bancaria a la cuenta indicada por el PROVEEDOR:
+IBAN: [IBAN]
+Cualquier modificación en las condiciones de pago deberá acordarse por escrito con un preaviso mínimo de 30 días.
+
+CUARTA — Vigencia
+El presente contrato entrará en vigor en la fecha de su firma y tendrá una duración de un (1) año, renovándose automáticamente por períodos anuales salvo denuncia expresa de cualquiera de las partes con un preaviso mínimo de 60 días antes del vencimiento.
+
+QUINTA — Confidencialidad
+Ambas partes se comprometen a mantener la más estricta confidencialidad sobre la información comercial, técnica y financiera a la que tengan acceso como consecuencia de la relación contractual, no pudiendo divulgarla a terceros sin consentimiento expreso de la otra parte. Esta obligación se mantendrá vigente durante dos (2) años tras la extinción del contrato.
+
+SEXTA — Protección de datos
+Ambas partes se comprometen a tratar los datos personales intercambiados conforme al Reglamento (UE) 2016/679 (RGPD) y la normativa española vigente, utilizándolos exclusivamente para la gestión de la relación comercial.
+
+SÉPTIMA — Incumplimiento y resolución
+Cualquiera de las partes podrá resolver el presente contrato de forma inmediata en caso de incumplimiento grave de las obligaciones aquí recogidas, notificándolo por escrito.
+
+OCTAVA — Jurisdicción
+Para cualquier controversia derivada del presente contrato, ambas partes se someten expresamente a los Juzgados y Tribunales de la ciudad de Valencia, con renuncia a cualquier otro fuero que pudiera corresponderles.
+
+En Valencia, a [FECHA]
+
+Por INFORTISA, S.L.                    Por [NOMBRE_FISCAL]
+D. Juan García Quesada                  [CONTACTO]
+Director de Negocio                     [CARGO]
+Firma: _________________               Firma: _________________`;
+
+function getContratoTemplate() {
+  return localStorage.getItem('infortisa_contrato_template') || CONTRATO_DEFAULT;
+}
+
+function guardarContratoTemplate() {
+  const t = document.getElementById('cfg-contrato-template').value;
+  localStorage.setItem('infortisa_contrato_template', t);
+  const s = document.getElementById('contrato-template-status');
+  s.style.display = 'inline';
+  setTimeout(() => s.style.display = 'none', 2500);
+}
+
+function resetContratoTemplate() {
+  if (!confirm('¿Restaurar la plantilla por defecto? Se perderán los cambios guardados.')) return;
+  localStorage.removeItem('infortisa_contrato_template');
+  document.getElementById('cfg-contrato-template').value = CONTRATO_DEFAULT;
+  showSyncStatus('Plantilla restaurada', 'ok');
+}
+
+function rellenarContrato(p) {
+  const hoy = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+  const limitePct  = p.umbral || 25;
+  const limiteEur  = p.facturacion > 0 ? Math.round(p.facturacion * limitePct / 100).toLocaleString('es-ES') : '—';
+  return getContratoTemplate()
+    .replace(/\[NOMBRE_FISCAL\]/g,    p.nombre_fiscal || p.nombre)
+    .replace(/\[NOMBRE_COMERCIAL\]/g, p.nombre_comercial || p.nombre)
+    .replace(/\[CIF\]/g,              p.cif)
+    .replace(/\[DIRECCION\]/g,        p.direccion || '—')
+    .replace(/\[CONTACTO\]/g,         p.contacto || '—')
+    .replace(/\[CARGO\]/g,            p.cargo_contacto || 'Representante')
+    .replace(/\[EMAIL\]/g,            p.email || '—')
+    .replace(/\[LIMITE_PCT\]/g,       limitePct)
+    .replace(/\[IMPORTE_LIMITE\]/g,   limiteEur)
+    .replace(/\[FORMA_PAGO\]/g,       p.forma_pago || '30 días')
+    .replace(/\[DIA_PAGO\]/g,         p.dia_pago || '15')
+    .replace(/\[IBAN\]/g,             p.cuenta_bancaria || '[PENDIENTE]')
+    .replace(/\[FECHA\]/g,            hoy);
+}
+
+async function enviarContrato(id) {
+  const p = PROVEEDORES.find(x => String(x.id) === String(id));
+  if (!p) return;
+  if (!p.email) { alert('El proveedor no tiene email registrado.'); return; }
+
+  const statusEl = document.getElementById('contrato-status-' + id);
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Enviando contrato...';
+
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('Necesitas estar conectado a Microsoft');
+
+    const texto   = rellenarContrato(p);
+    const subject = `Contrato marco de suministro — Infortisa / ${p.nombre_fiscal || p.nombre} ${p.cif}`;
+    const htmlBody = `<pre style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;white-space:pre-wrap">${texto}</pre>
+<hr>
+<p style="font-size:12px;color:#666">Por favor, firme este documento y responda a este correo adjuntando el PDF firmado.<br>
+Para cualquier consulta contacte con <a href="mailto:juan@infortisa.com">juan@infortisa.com</a>.</p>`;
+
+    const mailResp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: {
+          subject,
+          body: { contentType: 'HTML', content: htmlBody },
+          toRecipients: [{ emailAddress: { address: p.email } }]
+        },
+        saveToSentItems: true
+      })
+    });
+    if (!mailResp.ok) {
+      const err = await mailResp.json().catch(() => ({}));
+      throw new Error('sendMail: ' + (err.error?.message || 'HTTP ' + mailResp.status));
+    }
+
+    // Actualizar Estado_contrato en SharePoint
+    const site = await getSiteId(token);
+    await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Estado_contrato: 'Enviado' })
+    });
+
+    p.estado_contrato = 'Enviado';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Contrato enviado a ${p.email}`;
+    showFicha(id);
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function enviarAltaAdmin(id) {
+  const p = PROVEEDORES.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  const statusEl = document.getElementById('contrato-status-' + id);
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Enviando alta a Administración de Compras...';
+
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('Necesitas estar conectado a Microsoft');
+
+    const dep     = pct(p.compra, p.facturacion);
+    const limEur  = p.facturacion > 0 ? Math.round(p.facturacion * (p.umbral || 25) / 100).toLocaleString('es-ES') : '—';
+    const htmlBody = `
+<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.8;max-width:600px">
+  <h2 style="color:#1a1815;border-bottom:2px solid #2563eb;padding-bottom:8px">Alta de nuevo proveedor — Infortisa</h2>
+  <p>Se ha completado el proceso de compliance y el proveedor está listo para ser dado de alta en el sistema.</p>
+
+  <h3 style="color:#2563eb;margin-top:20px">Datos de identificación</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600;width:35%">Nombre fiscal</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.nombre_fiscal || p.nombre}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Nombre comercial</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.nombre_comercial || p.nombre}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">CIF</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8;font-family:monospace">${p.cif}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Dirección</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.direccion || '—'}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Web</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.web || '—'}</td></tr>
+  </table>
+
+  <h3 style="color:#2563eb;margin-top:20px">Contacto</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600;width:35%">Persona de contacto</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.contacto || '—'}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Cargo</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.cargo_contacto || '—'}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Teléfono</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.telefono || '—'}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Email</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.email || '—'}</td></tr>
+  </table>
+
+  <h3 style="color:#2563eb;margin-top:20px">Condiciones de pago</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600;width:35%">Forma de pago</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.forma_pago || '—'}, día ${p.dia_pago || '—'} · desde entrada en almacén</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">IBAN</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8;font-family:monospace">${p.cuenta_bancaria || '—'}</td></tr>
+  </table>
+
+  <h3 style="color:#2563eb;margin-top:20px">Datos financieros y compliance</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600;width:35%">Facturación total</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${fmt(p.facturacion)} €</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Empleados</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${p.empleados}</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Compra prevista Infortisa</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${fmt(p.compra)} €/año</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">% dependencia</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8;color:${dep >= (p.umbral||25) ? '#dc2626' : '#16a34a'}">${dep}% (límite ${p.umbral||25}%)</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Límite compra anual</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8">${limEur} €</td></tr>
+    <tr><td style="padding:5px 10px;background:#f7f6f3;font-weight:600">Contrato firmado</td><td style="padding:5px 10px;border-bottom:1px solid #e2ddd8;color:#16a34a">✓ Sí</td></tr>
+  </table>
+
+  <p style="margin-top:20px;font-size:12px;color:#666">La documentación de compliance y el contrato firmado están disponibles en la carpeta OneDrive del proveedor.<br>
+  Generado desde el sistema de gestión de proveedores de Infortisa · ${new Date().toLocaleString('es-ES')}</p>
+</div>`;
+
+    const mailResp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: {
+          subject: `Alta proveedor: ${p.nombre_fiscal || p.nombre} (${p.cif})`,
+          body: { contentType: 'HTML', content: htmlBody },
+          toRecipients: [
+            { emailAddress: { address: 'drodrigo@infortisa.com' } },
+            { emailAddress: { address: 'ediaz@infortisa.com' } }
+          ]
+        },
+        saveToSentItems: true
+      })
+    });
+    if (!mailResp.ok) {
+      const err = await mailResp.json().catch(() => ({}));
+      throw new Error('sendMail: ' + (err.error?.message || 'HTTP ' + mailResp.status));
+    }
+
+    // Actualizar Estado en SharePoint a Activo
+    const site = await getSiteId(token);
+    await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items/${id}/fields`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Estado: 'Activo' })
+    });
+
+    p.estadoRaw = 'Activo';
+    p.estado = 'ok';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Email de alta enviado a Administración de Compras (drodrigo@infortisa.com, ediaz@infortisa.com)';
+    showSyncStatus('Alta enviada a Administración de Compras', 'ok');
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
