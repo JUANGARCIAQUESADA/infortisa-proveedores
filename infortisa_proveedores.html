@@ -347,6 +347,7 @@ select.form-input { cursor: pointer; }
         <button class="tab active" onclick="showTab('tab-manual','alta-tabs',this)">Subida manual</button>
         <button class="tab" onclick="showTab('tab-auto','alta-tabs',this)">Solicitud automática</button>
         <button class="tab" onclick="showTab('tab-eval','alta-tabs',this)">Evaluación Claude</button>
+        <button class="tab" onclick="showTab('tab-masiva','alta-tabs',this)">Alta masiva</button>
       </div>
 
       <div id="tab-manual" data-group="alta-tabs">
@@ -358,6 +359,13 @@ select.form-input { cursor: pointer; }
                 <div class="form-group"><label class="form-label">Razón social</label><input class="form-input" id="f-nombre" placeholder="Empresa SL"></div>
                 <div class="form-group"><label class="form-label">CIF</label><input class="form-input" id="f-cif" placeholder="B-XXXXXXXX"></div>
                 <div class="form-group"><label class="form-label">Email contacto</label><input class="form-input" id="f-email" placeholder="empresa@mail.com"></div>
+                <div class="form-group" style="display:flex;align-items:flex-end;gap:8px">
+                  <button id="btn-buscar-datos" class="btn btn-ghost btn-sm" onclick="buscarDatosCIF()" style="white-space:nowrap">
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4.5"/><path d="M10 10l4 4" stroke-linecap="round"/></svg>
+                    Buscar datos recibidos
+                  </button>
+                  <span style="font-size:11px;color:var(--text3)">Extrae datos con Claude desde los documentos ya recibidos de este proveedor</span>
+                </div>
                 <div class="form-group"><label class="form-label">Nombre contacto</label><input class="form-input" id="f-contacto" placeholder="Nombre Apellido"></div>
                 <div class="form-group"><label class="form-label">Teléfono contacto</label><input class="form-input" id="f-telefono" placeholder="+34 600 000 000"></div>
                 <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:20px"><input type="checkbox" id="f-extranjero" style="width:16px;height:16px"><label class="form-label" style="margin:0">Proveedor extranjero (emails en inglés)</label></div>
@@ -386,6 +394,7 @@ select.form-input { cursor: pointer; }
                 <div class="form-group"><label class="form-label">Web</label><input class="form-input" id="f-web" placeholder="https://www.empresa.com"></div>
                 <div class="form-group"><label class="form-label">Cargo del contacto</label><input class="form-input" id="f-cargo" placeholder="Director comercial"></div>
               </div>
+              <div id="autofill-status" style="display:none;margin-top:8px;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);background:var(--surface2);color:var(--text2)"></div>
             </div>
             <div class="card mb16">
               <div class="card-title">Condiciones de pago</div>
@@ -502,6 +511,69 @@ select.form-input { cursor: pointer; }
           </div>
           <button class="btn btn-primary" onclick="evaluarCompliance()">Evaluar con Claude</button>
           <div id="eval-result" style="margin-top:16px;display:none"></div>
+        </div>
+      </div>
+
+      <div id="tab-masiva" data-group="alta-tabs" style="display:none">
+        <div class="grid2">
+          <div>
+            <div class="card mb16">
+              <div class="card-title">Alta masiva de proveedores existentes</div>
+              <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">
+                Importa múltiples proveedores desde un fichero CSV. Se crearán directamente como <strong>Activos</strong> en SharePoint sin enviar ningún email al proveedor ni a Administración de Compras.
+              </div>
+              <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--amber);margin-bottom:14px">
+                ⚠️ Sin emails. Los proveedores quedan en estado <strong>Activo</strong> directamente.
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="altaMasivaDescargarPlantilla()">⬇ Descargar plantilla CSV</button>
+            </div>
+            <div class="card mb16">
+              <div class="card-title">Columnas del fichero <span style="font-family:var(--mono);font-weight:400;font-size:11px">(separador: punto y coma)</span></div>
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12px;line-height:2">
+                <div style="font-family:var(--mono);color:var(--red)">*Titulo</div><div style="color:var(--text3)">Razón social (obligatorio)</div>
+                <div style="font-family:var(--mono);color:var(--red)">*CIF</div><div style="color:var(--text3)">B-12345678</div>
+                <div style="font-family:var(--mono)">Email_proveedor</div><div style="color:var(--text3)">Email de contacto</div>
+                <div style="font-family:var(--mono)">Nombre_contacto</div><div style="color:var(--text3)">Persona de contacto</div>
+                <div style="font-family:var(--mono)">Telefono_contacto</div><div style="color:var(--text3)">+34 600 000 000</div>
+                <div style="font-family:var(--mono)">Extranjero</div><div style="color:var(--text3)">Si / No</div>
+                <div style="font-family:var(--mono)">Facturacion_total</div><div style="color:var(--text3)">Número en euros</div>
+                <div style="font-family:var(--mono)">Empleados</div><div style="color:var(--text3)">Número entero</div>
+                <div style="font-family:var(--mono)">Compra_Infortisa</div><div style="color:var(--text3)">€/año previstos</div>
+                <div style="font-family:var(--mono)">Periodicidad</div><div style="color:var(--text3)">Trimestral / Semestral / Anual</div>
+                <div style="font-family:var(--mono)">Nombre_fiscal</div><div style="color:var(--text3)">Si difiere de razón social</div>
+                <div style="font-family:var(--mono)">Nombre_comercial</div><div style="color:var(--text3)">Marca comercial</div>
+                <div style="font-family:var(--mono)">Direccion</div><div style="color:var(--text3)">Calle y número</div>
+                <div style="font-family:var(--mono)">Poblacion</div><div style="color:var(--text3)">Localidad</div>
+                <div style="font-family:var(--mono)">Ciudad</div><div style="color:var(--text3)">Ciudad / Provincia</div>
+                <div style="font-family:var(--mono)">Pais</div><div style="color:var(--text3)">España por defecto</div>
+                <div style="font-family:var(--mono)">Web</div><div style="color:var(--text3)">URL completa</div>
+                <div style="font-family:var(--mono)">Forma_pago</div><div style="color:var(--text3)">5 / 30 / 60 / 90 días</div>
+                <div style="font-family:var(--mono)">Dia_pago</div><div style="color:var(--text3)">5, 15 o 25</div>
+                <div style="font-family:var(--mono)">Cuenta_bancaria</div><div style="color:var(--text3)">IBAN completo</div>
+                <div style="font-family:var(--mono)">Cargo_contacto</div><div style="color:var(--text3)">Director comercial…</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card mb16">
+              <div class="card-title">Subir fichero CSV</div>
+              <div style="margin-bottom:12px">
+                <input type="file" id="masiva-file" accept=".csv,.txt" class="form-input" style="font-size:13px">
+              </div>
+              <button class="btn btn-ghost" onclick="altaMasivaPrevisualizarCSV()">Previsualizar</button>
+            </div>
+            <div id="masiva-preview" style="display:none">
+              <div class="card">
+                <div class="card-title">Vista previa <span id="masiva-count" class="badge badge-blue"></span></div>
+                <div id="masiva-tabla" style="font-size:12px;max-height:340px;overflow-y:auto"></div>
+                <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+                  <button class="btn btn-primary" onclick="altaMasivaImportar()">Importar a SharePoint</button>
+                  <button class="btn btn-ghost" onclick="document.getElementById('masiva-preview').style.display='none'">Cancelar</button>
+                </div>
+                <div id="masiva-status" style="display:none;margin-top:10px;font-size:13px;padding:8px 12px;border-radius:var(--radius-sm)"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1236,106 +1308,159 @@ select.form-input { cursor: pointer; }
 
     <!-- COMPLIANCE -->
     <div id="s-compliance" style="display:none">
-      <div style="max-width:860px">
-        <div class="manual-section">
-          <div class="manual-h1">Procedimiento de Compliance — Alta y Revisión de Proveedores</div>
-          <div class="manual-p" style="color:var(--text3);font-size:12px">Infortisa S.L. · Dirección de Negocio · v1.0 · 2025</div>
-          <div class="manual-note">Este documento establece el procedimiento interno oficial para la verificación, validación y seguimiento de proveedores en Infortisa S.L.</div>
+      <div style="max-width:920px">
+
+        <!-- Hero -->
+        <div style="background:linear-gradient(135deg,#1e3a6e 0%,#2563eb 100%);border-radius:var(--radius);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;gap:20px">
+          <div style="width:56px;height:56px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M12 2l7.5 2.8v5.7c0 4.8-3.2 7.9-7.5 9.5C4.5 18.4 1.5 15.3 1.5 10.5V4.8L12 2z"/><path d="M8 11.5l2.5 2.5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div style="font-size:19px;font-weight:700;color:white;letter-spacing:-.4px">Procedimiento de Compliance</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.72);margin-top:3px">Alta y Revisión de Proveedores · Infortisa S.L. · v1.0 · 2025</div>
+          </div>
+          <div style="margin-left:auto;text-align:right">
+            <div style="font-size:10px;color:rgba(255,255,255,.5);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase">Dirección de Negocio</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.85);margin-top:6px">Juan García Quesada</div>
+          </div>
         </div>
 
-        <div class="manual-section">
-          <div class="manual-h2">1. Objetivo</div>
-          <div class="manual-p">Establecer un procedimiento interno de verificación y validación para el <strong>alta de nuevos proveedores</strong> en Infortisa S.L., con el objetivo de garantizar la solvencia, legalidad y viabilidad comercial de las empresas con las que se establecen relaciones comerciales.</div>
-          <div class="manual-p">Este proceso busca minimizar riesgos legales, financieros y de dependencia comercial.</div>
+        <!-- KPI cards -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+          <div class="card" style="border-left:3px solid var(--red);padding:16px 18px">
+            <div style="font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Límite dependencia</div>
+            <div style="font-size:30px;font-weight:700;letter-spacing:-1.5px;color:var(--red);line-height:1">25%</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:5px">máx. Infortisa / facturación proveedor</div>
+          </div>
+          <div class="card" style="border-left:3px solid var(--accent);padding:16px 18px">
+            <div style="font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Documentos obligatorios</div>
+            <div style="font-size:30px;font-weight:700;letter-spacing:-1.5px;color:var(--accent);line-height:1">9</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:5px">antes de proceder al alta</div>
+          </div>
+          <div class="card" style="border-left:3px solid var(--green);padding:16px 18px">
+            <div style="font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Validación final</div>
+            <div style="font-size:30px;font-weight:700;letter-spacing:-1.5px;color:var(--green);line-height:1">Dir.</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:5px">aprobación por Dirección</div>
+          </div>
         </div>
 
-        <div class="manual-section">
-          <div class="manual-h2">2. Solicitud de Alta de Proveedor</div>
-          <div class="manual-p">El proceso de alta puede iniciarse a solicitud de:</div>
-          <ul class="manual-ul">
-            <li>Product Manager</li>
-            <li>Departamento Comercial</li>
-            <li>Dirección</li>
-            <li>Otros departamentos que identifiquen una oportunidad de negocio</li>
-          </ul>
-          <div class="manual-p">La solicitud deberá comunicarse a <strong>Dirección</strong> o al departamento responsable del alta de proveedores.</div>
+        <!-- Steps + Docs grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+          <!-- Process steps -->
+          <div class="card">
+            <div class="card-title">Proceso paso a paso <span class="badge badge-blue">8 fases</span></div>
+            <div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">1</div>
+                <div><div style="font-size:13px;font-weight:600">Solicitud de alta</div><div style="font-size:12px;color:var(--text3);margin-top:1px">PM, Comercial, Dirección u otro departamento</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">2</div>
+                <div><div style="font-size:13px;font-weight:600">Petición de documentación</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Email automático al proveedor con la lista de 9 documentos</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">3</div>
+                <div><div style="font-size:13px;font-weight:600">Recepción de documentos</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Power Automate guarda automáticamente en carpeta OneDrive</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">4</div>
+                <div><div style="font-size:13px;font-weight:600">Informe comercial Informa D&amp;B</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Administración solicita el informe. Claude extrae datos clave</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">5</div>
+                <div><div style="font-size:13px;font-weight:600">Análisis de dependencia</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Verificar que Infortisa no supera el 25% de la facturación</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">6</div>
+                <div><div style="font-size:13px;font-weight:600">Coherencia estructural</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Evaluar coherencia entre facturación, empleados y capacidad operativa</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border)">
+                <div style="width:26px;height:26px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">7</div>
+                <div><div style="font-size:13px;font-weight:600">Validación por Dirección</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Revisión final y aprobación de Juan García Quesada</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0">
+                <div style="width:26px;height:26px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:700;color:white">8</div>
+                <div><div style="font-size:13px;font-weight:600">Alta y envío del contrato</div><div style="font-size:12px;color:var(--text3);margin-top:1px">Contrato marco enviado. Proveedor firma. Notificación a Adm. Compras</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Docs + Alert -->
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-title">Documentación obligatoria</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">📊</span><div><div style="font-size:12px;font-weight:500">Informe comercial Informa D&amp;B</div><div style="font-size:11px;color:var(--text3)">Análisis financiero externo</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">🏛️</span><div><div style="font-size:12px;font-weight:500">Certificado Hacienda al corriente</div><div style="font-size:11px;color:var(--text3)">Situación fiscal</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">🏢</span><div><div style="font-size:12px;font-weight:500">Certificado Seguridad Social</div><div style="font-size:11px;color:var(--text3)">Situación laboral</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">📜</span><div><div style="font-size:12px;font-weight:500">Escritura de constitución</div><div style="font-size:11px;color:var(--text3)">Existencia legal</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">🆔</span><div><div style="font-size:12px;font-weight:500">Tarjeta identificativa CIF</div><div style="font-size:11px;color:var(--text3)">Identificación fiscal</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">📈</span><div><div style="font-size:12px;font-weight:500">Cuentas anuales auditadas</div><div style="font-size:11px;color:var(--text3)">Solvencia financiera</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">📋</span><div><div style="font-size:12px;font-weight:500">Modelo 303 — IVA trimestral</div><div style="font-size:11px;color:var(--text3)">Actividad fiscal</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">📋</span><div><div style="font-size:12px;font-weight:500">Modelo 322 — IVA grupo fiscal</div><div style="font-size:11px;color:var(--text3)">Actividad fiscal grupo</div></div></div>
+                <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:6px"><span style="font-size:15px">🏦</span><div><div style="font-size:12px;font-weight:500">Certificado titularidad bancaria</div><div style="font-size:11px;color:var(--text3)">Verificación IBAN</div></div></div>
+              </div>
+            </div>
+            <div style="background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--radius);padding:14px 16px">
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <div style="font-size:20px;flex-shrink:0">⚠️</div>
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:4px">Regla crítica — Dependencia comercial</div>
+                  <div style="font-size:12px;color:var(--text2);line-height:1.6">Infortisa <strong>no debe representar más del 25%</strong> de la facturación total del proveedor. Protege a ambas partes de la dependencia económica excesiva.</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="manual-section">
-          <div class="manual-h2">3. Documentación Obligatoria del Proveedor</div>
-          <div class="manual-p">Antes de proceder al alta, el proveedor deberá aportar la siguiente documentación <strong>actualizada</strong>:</div>
-          <div class="manual-h3">Documentación fiscal y legal</div>
-          <ul class="manual-ul">
-            <li>Certificado de estar al corriente con <strong>Hacienda</strong></li>
-            <li>Certificado de estar al corriente con la <strong>Seguridad Social</strong></li>
-            <li>Alta en el <strong>IAE</strong></li>
-            <li>Escritura de constitución de la sociedad</li>
-            <li>Tarjeta identificativa del <strong>CIF</strong></li>
-          </ul>
-          <div class="manual-note">Esta documentación permite verificar la <strong>existencia legal</strong> de la empresa, su situación fiscal y su situación con la Seguridad Social.</div>
+        <!-- Evaluation criteria -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Criterios de evaluación</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:var(--surface2);border-radius:8px;padding:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></span>Dependencia comercial</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.6">Infortisa <strong>≤ 25%</strong> de la facturación del proveedor. Garantiza independencia y reduce riesgo de dependencia económica.</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0"></span>Coherencia estructural</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.6">Coherencia entre <strong>facturación, empleados y capacidad operativa</strong>. Estructura real para soportar el volumen previsto.</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>Solvencia financiera</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.6">Informe D&amp;B: facturación histórica, fondos propios, resultado del ejercicio, score de cese y probabilidad de demora.</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></span>Situación legal y fiscal</div>
+              <div style="font-size:12px;color:var(--text2);line-height:1.6">Al corriente con <strong>Hacienda y SS</strong>, escritura de constitución válida y CIF activo.</div>
+            </div>
+          </div>
         </div>
 
-        <div class="manual-section">
-          <div class="manual-h2">4. Informe Comercial Interno</div>
-          <div class="manual-p">De forma paralela, el departamento de Administración solicitará un <strong>informe comercial del proveedor</strong> (Informe Informa D&amp;B) que incluirá, entre otros:</div>
-          <ul class="manual-ul">
-            <li>Facturación de los últimos años</li>
-            <li>Número de empleados</li>
-            <li>Actividad empresarial</li>
-            <li>Solvencia y estabilidad financiera</li>
-            <li>Estructura comercial</li>
-            <li>Otros indicadores relevantes</li>
-          </ul>
-          <div class="manual-p">Este informe permitirá evaluar la capacidad real del proveedor para operar con Infortisa.</div>
-        </div>
-
-        <div class="manual-section">
-          <div class="manual-h2">5. Criterios de Evaluación</div>
-          <div class="manual-p">Para aprobar el alta del proveedor se analizarán principalmente los siguientes parámetros:</div>
-
-          <div class="manual-h3">Dependencia comercial</div>
-          <div class="manual-warn"><strong>Infortisa no deberá representar más del 25% de la facturación total del proveedor.</strong> Este criterio busca evitar situaciones de dependencia económica excesiva, reducir riesgos comerciales y garantizar estabilidad en la relación comercial.</div>
-
-          <div class="manual-h3">Coherencia estructural</div>
-          <div class="manual-p">Se evaluará que exista coherencia entre:</div>
-          <ul class="manual-ul">
-            <li>Volumen de facturación</li>
-            <li>Número de empleados</li>
-            <li>Capacidad operativa</li>
-            <li>Estructura empresarial</li>
-          </ul>
-          <div class="manual-p">El objetivo es asegurar que el proveedor tiene capacidad real para sostener el volumen de negocio previsto.</div>
-        </div>
-
-        <div class="manual-section">
-          <div class="manual-h2">6. Validación Final</div>
-          <div class="manual-p">Una vez revisada la documentación y el informe comercial:</div>
-          <ol class="manual-ol">
-            <li>Se analizará toda la información disponible.</li>
-            <li>Se valorará si el proveedor cumple los estándares de Infortisa.</li>
-            <li>La decisión final de alta será <strong>validada por Dirección</strong> o por el responsable designado.</li>
-          </ol>
-        </div>
-
-        <div class="manual-section">
-          <div class="manual-h2">7. Archivo y Control</div>
-          <div class="manual-p">Toda la documentación recopilada deberá:</div>
-          <ul class="manual-ul">
-            <li>Guardarse en el <strong>sistema interno de gestión documental de compras</strong> (carpeta OneDrive del proveedor).</li>
-            <li>Estar disponible para revisiones internas o auditorías.</li>
-          </ul>
-        </div>
-
-        <div class="manual-section">
-          <div class="manual-h2">8. Revisión Periódica</div>
-          <div class="manual-p">Infortisa podrá revisar periódicamente la situación de los proveedores dados de alta, especialmente en relación con:</div>
-          <ul class="manual-ul">
-            <li>Situación fiscal</li>
-            <li>Cambios societarios</li>
-            <li>Evolución del negocio</li>
-            <li>Dependencia comercial</li>
-          </ul>
-          <div class="manual-note">La periodicidad de revisión se configura por proveedor en la aplicación (trimestral, semestral o anual). El sistema envía recordatorios automáticos mediante Power Automate.</div>
+        <!-- Archive & Review -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+              Archivo y control documental
+            </div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">Toda la documentación se guarda en la <strong>carpeta OneDrive del proveedor</strong> (Activos/{nombre}) y queda disponible para revisiones internas y auditorías.</div>
+            <div style="padding:8px 10px;background:var(--accent-bg);border-radius:6px;font-size:12px;color:var(--accent)">Los documentos del proveedor se guardan automáticamente vía <strong>Power Automate Flujo C</strong>.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+              Revisión periódica
+            </div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:10px">Infortisa revisa periódicamente: <strong>situación fiscal, cambios societarios, evolución del negocio y dependencia comercial</strong>.</div>
+            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>Situación fiscal</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>Cambios societarios</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>Evolución del negocio</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0"></div>Dependencia comercial</div>
+            </div>
+            <div style="padding:8px 10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text3)">Periodicidad configurable por proveedor. Recordatorios automáticos vía <strong>Power Automate Flujo E</strong>.</div>
+          </div>
         </div>
 
       </div>
@@ -1929,7 +2054,7 @@ function showFicha(id) {
     <div style="font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--text3)">Documentación compliance</div>
     <div class="doc-list">${docsHtml}</div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="solicitarTitularidad('${id}','${p.nombre}','${p.email}','${p.contacto}')">Solicitar titularidad bancaria</button>
+      <button class="btn btn-ghost btn-sm" onclick="solicitarTitularidad('${id}','${p.nombre}','${p.email}','${p.contacto}',${p.extranjero})">Solicitar titularidad bancaria</button>
     </div>
     <div id="titularidad-status-${id}" style="margin-top:6px;font-size:13px;display:none"></div>
     <div class="sep"></div>
@@ -2721,7 +2846,7 @@ function showSyncStatus(msg, type) {
 }
 
 // ─── TITULARIDAD BANCARIA ─────────────────────────────────────────────────────
-async function solicitarTitularidad(id, nombre, email, contacto) {
+async function solicitarTitularidad(id, nombre, email, contacto, extranjero) {
   if (!email) { alert('El proveedor no tiene email registrado.'); return; }
   const statusEl = document.getElementById('titularidad-status-' + id);
   statusEl.style.display = 'block';
@@ -2730,8 +2855,15 @@ async function solicitarTitularidad(id, nombre, email, contacto) {
   try {
     const token = await getToken();
     if (!token) throw new Error('Necesitas estar conectado a Microsoft');
-    const saludo = contacto ? `Estimado/a ${contacto},` : 'Estimado/a,';
-    const htmlBody = `<p>${saludo}</p>
+    const isEn = extranjero === true || extranjero === 'true';
+    const htmlBody = isEn
+      ? `<p>Dear ${contacto || 'Sir/Madam'},</p>
+<p>As part of our supplier onboarding and compliance process, we kindly request the <strong>bank account ownership certificate</strong> (titularidad bancaria) for the account you will use to operate with Infortisa S.L.</p>
+<p>This certificate can be requested directly at your bank branch. It is usually issued immediately and free of charge.</p>
+<p>Please reply to this email attaching the certificate at your earliest convenience.</p>
+<p>Do not hesitate to contact us for any queries.<br>
+Kind regards,<br><strong>Juan García Quesada</strong><br>Business Director · Infortisa S.L.<br>juan@infortisa.com</p>`
+      : `<p>${contacto ? `Estimado/a ${contacto},` : 'Estimado/a,'}</p>
 <p>En el marco de nuestro proceso de alta y compliance de proveedores, necesitamos que nos haga llegar el <strong>certificado de titularidad bancaria</strong> de la cuenta con la que operará con Infortisa S.L.</p>
 <p>Este certificado puede solicitarlo directamente en su entidad bancaria. Normalmente se emite en el momento y es gratuito.</p>
 <p>Por favor, adjúntelo en su respuesta a este correo a la mayor brevedad posible.</p>
@@ -2742,7 +2874,9 @@ Un saludo,<br><strong>Juan García Quesada</strong><br>Director de Negocio · In
       headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: {
-          subject: `Solicitud certificado de titularidad bancaria — Infortisa / ${nombre}`,
+          subject: isEn
+            ? `Bank account ownership certificate request — Infortisa / ${nombre}`
+            : `Solicitud certificado de titularidad bancaria — Infortisa / ${nombre}`,
           body: { contentType: 'HTML', content: htmlBody },
           toRecipients: [{ emailAddress: { address: email } }]
         },
@@ -2862,8 +2996,18 @@ async function enviarContrato(id) {
     if (!token) throw new Error('Necesitas estar conectado a Microsoft');
 
     const texto   = rellenarContrato(p);
-    const subject = `Contrato marco de suministro — Infortisa / ${p.nombre_fiscal || p.nombre} ${p.cif}`;
-    const htmlBody = `<pre style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;white-space:pre-wrap">${texto}</pre>
+    const isEn    = p.extranjero === true || p.extranjero === 'true';
+    const subject = isEn
+      ? `Supply framework agreement — Infortisa / ${p.nombre_fiscal || p.nombre} ${p.cif}`
+      : `Contrato marco de suministro — Infortisa / ${p.nombre_fiscal || p.nombre} ${p.cif}`;
+    const htmlBody = isEn
+      ? `<p style="font-family:Arial,sans-serif;font-size:14px">Dear ${p.contacto || 'Sir/Madam'},</p>
+<p style="font-family:Arial,sans-serif;font-size:14px">Please find below the supply framework agreement between <strong>Infortisa S.L.</strong> and <strong>${p.nombre_fiscal || p.nombre}</strong>.</p>
+<p style="font-family:Arial,sans-serif;font-size:14px">Kindly sign the document and reply to this email attaching the signed PDF.</p>
+<pre style="font-family:Arial,sans-serif;font-size:13px;line-height:1.7;white-space:pre-wrap;margin-top:20px;border-top:1px solid #eee;padding-top:16px">${texto}</pre>
+<hr>
+<p style="font-size:12px;color:#666">For any queries please contact <a href="mailto:juan@infortisa.com">juan@infortisa.com</a>.</p>`
+      : `<pre style="font-family:Arial,sans-serif;font-size:14px;line-height:1.7;white-space:pre-wrap">${texto}</pre>
 <hr>
 <p style="font-size:12px;color:#666">Por favor, firme este documento y responda a este correo adjuntando el PDF firmado.<br>
 Para cualquier consulta contacte con <a href="mailto:juan@infortisa.com">juan@infortisa.com</a>.</p>`;
@@ -2994,6 +3138,274 @@ async function enviarAltaAdmin(id) {
     statusEl.textContent = '✓ Email de alta enviado a Administración de Compras (drodrigo@infortisa.com, ediaz@infortisa.com)';
     showSyncStatus('Alta enviada a Administración de Compras', 'ok');
   } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ─── ALTA MASIVA ──────────────────────────────────────────────────────────────
+function altaMasivaDescargarPlantilla() {
+  const headers = ['Titulo','CIF','Email_proveedor','Nombre_contacto','Telefono_contacto','Extranjero','Facturacion_total','Empleados','Compra_Infortisa','Periodicidad','Nombre_fiscal','Nombre_comercial','Direccion','Poblacion','Ciudad','Pais','Web','Forma_pago','Dia_pago','Cuenta_bancaria','Cargo_contacto'];
+  const example = ['Empresa Ejemplo SL','B-12345678','contacto@empresa.com','Juan García','600000000','No','5000000','50','200000','Trimestral','Empresa Ejemplo Sociedad Limitada','Ejemplo','Calle Mayor 1','Valencia','Valencia','España','https://www.empresa.com','30 días','15','ES00 0000 0000 0000 0000 0000','Director Comercial'];
+  const csv = [headers.join(';'), example.join(';')].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+  a.download = 'plantilla_alta_masiva.csv';
+  a.click();
+}
+
+let MASIVA_ROWS = [];
+
+function altaMasivaPrevisualizarCSV() {
+  const file = document.getElementById('masiva-file').files[0];
+  if (!file) { alert('Selecciona un fichero CSV'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result;
+      const lines = text.trim().split(/\r?\n/);
+      const sep = lines[0].includes(';') ? ';' : ',';
+      const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+      MASIVA_ROWS = lines.slice(1).filter(l => l.trim()).map(line => {
+        const cols = line.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = cols[i] || '');
+        return obj;
+      }).filter(r => r.Titulo);
+      if (!MASIVA_ROWS.length) { alert('No se encontraron filas con datos válidos'); return; }
+      document.getElementById('masiva-count').textContent = MASIVA_ROWS.length + ' proveedores';
+      document.getElementById('masiva-tabla').innerHTML = `
+        <table style="width:100%;font-size:11px;border-collapse:collapse">
+          <thead><tr style="background:var(--surface2)">
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Razón social</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">CIF</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Email</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Facturación</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">País</th>
+          </tr></thead>
+          <tbody>${MASIVA_ROWS.map(r => `<tr>
+            <td style="padding:5px 8px;border-bottom:1px solid var(--border)">${r.Titulo}</td>
+            <td style="padding:5px 8px;border-bottom:1px solid var(--border);font-family:var(--mono)">${r.CIF||'—'}</td>
+            <td style="padding:5px 8px;border-bottom:1px solid var(--border)">${r.Email_proveedor||'—'}</td>
+            <td style="padding:5px 8px;border-bottom:1px solid var(--border)">${r.Facturacion_total ? parseInt(r.Facturacion_total).toLocaleString('es-ES') + ' €' : '—'}</td>
+            <td style="padding:5px 8px;border-bottom:1px solid var(--border)">${r.Pais||'España'}</td>
+          </tr>`).join('')}</tbody>
+        </table>`;
+      document.getElementById('masiva-preview').style.display = 'block';
+      document.getElementById('masiva-status').style.display = 'none';
+    } catch(err) {
+      alert('Error leyendo CSV: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+async function altaMasivaImportar() {
+  if (!MASIVA_ROWS.length) return;
+  const token = await getToken();
+  if (!token) { alert('Necesitas estar conectado con Microsoft.'); return; }
+  const statusEl = document.getElementById('masiva-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'var(--accent-bg)';
+  statusEl.style.color = 'var(--accent)';
+  try {
+    const site = await getSiteId(token);
+    let ok = 0, fail = 0;
+    for (let i = 0; i < MASIVA_ROWS.length; i++) {
+      const r = MASIVA_ROWS[i];
+      statusEl.textContent = `⏳ Importando ${i + 1}/${MASIVA_ROWS.length}: ${r.Titulo}...`;
+      const periodicidad = r.Periodicidad || 'Trimestral';
+      const resp = await fetch(`https://graph.microsoft.com/v1.0/sites/${site}/lists/${encodeURIComponent(SP.listName)}/items`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: {
+          Title:             r.Titulo,
+          CIF:               r.CIF || '',
+          Email_proveedor:   r.Email_proveedor || '',
+          Nombre_contacto:   r.Nombre_contacto || '',
+          Telefono_contacto: r.Telefono_contacto || '',
+          Extranjero:        r.Extranjero === 'Si' || r.Extranjero === 'Sí' || r.Extranjero === 'true',
+          Facturacion_total: parseFloat(r.Facturacion_total) || 0,
+          Empleados:         parseInt(r.Empleados) || 0,
+          Compra_Infortisa:  parseFloat(r.Compra_Infortisa) || 0,
+          Umbral_pct:        UMBRAL.val,
+          Periodicidad:      periodicidad,
+          Prox_revision:     calcProxRevision(periodicidad),
+          Estado:            'Activo',
+          Carpeta_OneDrive:  'Activos/' + r.Titulo,
+          Nombre_fiscal:     r.Nombre_fiscal || r.Titulo,
+          Nombre_comercial:  r.Nombre_comercial || '',
+          Direccion:         r.Direccion || '',
+          Poblacion:         r.Poblacion || '',
+          Ciudad:            r.Ciudad || '',
+          Pais:              r.Pais || 'España',
+          Web:               r.Web || '',
+          Forma_pago:        r.Forma_pago || '30 días',
+          Dia_pago:          r.Dia_pago || '15',
+          Cuenta_bancaria:   r.Cuenta_bancaria || '',
+          Estado_contrato:   'Pendiente',
+          Cargo_contacto:    r.Cargo_contacto || ''
+        }})
+      });
+      if (resp.ok || resp.status === 201) ok++; else fail++;
+      await new Promise(res => setTimeout(res, 250));
+    }
+    statusEl.style.background = 'var(--green-bg)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Importación completada: ${ok} proveedores creados${fail ? ' · ' + fail + ' errores' : ''}. Sin emails enviados.`;
+    MASIVA_ROWS = [];
+    await cargarProveedoresSP(token);
+  } catch(e) {
+    statusEl.style.background = 'var(--red-bg)';
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ─── AUTO-FILL DESDE CIF ──────────────────────────────────────────────────────
+async function buscarDatosCIF() {
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const cif    = document.getElementById('f-cif').value.trim();
+  if (!nombre && !cif) { alert('Introduce al menos la razón social o el CIF del proveedor'); return; }
+  const btn      = document.getElementById('btn-buscar-datos');
+  const statusEl = document.getElementById('autofill-status');
+  btn.disabled = true;
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Buscando documentos en SharePoint...';
+  try {
+    const token    = await getToken();
+    if (!token) throw new Error('Necesitas estar conectado a Microsoft');
+    const site     = await getSiteId(token);
+    const driveId  = await getDriveId(token, site);
+    const q        = encodeURIComponent(nombre || cif);
+    const resp     = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${driveId}/root/search(q='${q}')`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    const data = await resp.json();
+    const archivos = (data.value || [])
+      .filter(f => f.file && /\.(pdf|txt)$/i.test(f.name))
+      .slice(0, 12);
+    if (!archivos.length) {
+      statusEl.textContent = '⚠ No se encontraron documentos PDF/TXT para este proveedor en SharePoint.';
+      return;
+    }
+    mostrarModalSeleccionDoc(archivos, token);
+    statusEl.style.display = 'none';
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function mostrarModalSeleccionDoc(archivos, token) {
+  const old = document.getElementById('modal-doc-seleccion');
+  if (old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modal-doc-seleccion';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:var(--surface);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px">Seleccionar documento</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Claude extraerá los datos del documento y rellenará el formulario automáticamente</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${archivos.map((f, i) => {
+        const url = f['@microsoft.graph.downloadUrl'] || '';
+        const isPdf = /\.pdf$/i.test(f.name);
+        const size = f.size ? Math.round(f.size / 1024) + ' KB' : '';
+        const fecha = f.lastModifiedDateTime ? new Date(f.lastModifiedDateTime).toLocaleDateString('es-ES') : '';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+          <span style="font-size:18px;flex-shrink:0">${isPdf ? '📄' : '📝'}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div><div style="font-size:11px;color:var(--text3);margin-top:1px">${size}${size && fecha ? ' · ' : ''}${fecha}</div></div>
+          <button class="btn btn-primary btn-sm" onclick="analizarDocProveedor('doc_${i}', '${encodeURIComponent(f.name)}')">Analizar</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="analisis-status" style="margin-top:12px;font-size:13px;display:none;padding:8px 10px;border-radius:6px"></div>
+    <div style="margin-top:16px;text-align:right"><button class="btn btn-ghost" onclick="document.getElementById('modal-doc-seleccion').remove()">Cerrar</button></div>
+  </div>`;
+  // Store download URLs in window for access from onclick
+  window._masivaDocs = archivos;
+  document.body.appendChild(modal);
+}
+
+async function analizarDocProveedor(docRef, nombreEnc) {
+  const statusEl = document.getElementById('analisis-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'var(--accent-bg)';
+  statusEl.style.color = 'var(--accent)';
+  statusEl.textContent = '⏳ Descargando documento...';
+  try {
+    const key = getClaudeKey();
+    if (!key) throw new Error('Configura la clave API de Claude en Configuración');
+    const idx   = parseInt(docRef.replace('doc_', ''));
+    const file  = window._masivaDocs[idx];
+    const url   = file['@microsoft.graph.downloadUrl'];
+    if (!url) throw new Error('No se pudo obtener la URL de descarga');
+    const fileResp = await fetch(url);
+    if (!fileResp.ok) throw new Error('Error descargando el archivo: HTTP ' + fileResp.status);
+    const buffer = await fileResp.arrayBuffer();
+    const bytes  = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + 8192, bytes.length)));
+    }
+    const base64  = btoa(binary);
+    const nombre  = decodeURIComponent(nombreEnc);
+    const isPdf   = /\.pdf$/i.test(nombre);
+    statusEl.textContent = '⏳ Analizando con Claude...';
+    const prompt = 'Extrae todos los datos de empresa/proveedor que aparezcan en este documento. Responde ÚNICAMENTE con JSON válido, sin markdown, con estos campos (null si no aparece): {"razon_social":null,"nombre_fiscal":null,"cif":null,"nombre_contacto":null,"cargo_contacto":null,"telefono":null,"email":null,"direccion":null,"poblacion":null,"ciudad":null,"pais":null,"web":null,"facturacion_total":null,"empleados":null,"cuenta_bancaria":null}';
+    const messages = isPdf
+      ? [{ role: 'user', content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      : [{ role: 'user', content: prompt + '\n\nTexto del documento:\n' + atob(base64).substring(0, 8000) }];
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+    if (isPdf) headers['anthropic-beta'] = 'pdfs-2024-09-25';
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers,
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 800, messages })
+    });
+    if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message || 'HTTP ' + resp.status); }
+    const rdata = await resp.json();
+    const json  = JSON.parse((rdata.content?.[0]?.text || '{}').replace(/```json|```/g, '').trim());
+    const setF  = (id, val) => { if (val != null && val !== '') { const el = document.getElementById(id); if (el) el.value = val; return 1; } return 0; };
+    let filled = 0;
+    filled += setF('f-nombre',           json.razon_social);
+    filled += setF('f-nombre-fiscal',    json.nombre_fiscal);
+    filled += setF('f-nombre-comercial', json.nombre_comercial);
+    filled += setF('f-cif',              json.cif);
+    filled += setF('f-contacto',         json.nombre_contacto);
+    filled += setF('f-cargo',            json.cargo_contacto);
+    filled += setF('f-telefono',         json.telefono);
+    filled += setF('f-email',            json.email);
+    filled += setF('f-direccion',        json.direccion);
+    filled += setF('f-poblacion',        json.poblacion);
+    filled += setF('f-ciudad',           json.ciudad);
+    filled += setF('f-pais',             json.pais);
+    filled += setF('f-web',             json.web);
+    filled += setF('f-facturacion',      json.facturacion_total);
+    filled += setF('f-empleados',        json.empleados);
+    filled += setF('f-iban',             json.cuenta_bancaria);
+    statusEl.style.background = 'var(--green-bg)';
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ ${filled} campos rellenados desde "${nombre}". Revisa y completa el resto.`;
+    setTimeout(() => {
+      const modal = document.getElementById('modal-doc-seleccion');
+      if (modal) modal.remove();
+      const af = document.getElementById('autofill-status');
+      if (af) { af.style.display = 'block'; af.style.color = 'var(--green)'; af.textContent = `✓ ${filled} campos rellenados con Claude desde "${nombre}"`; }
+    }, 2000);
+  } catch(e) {
+    statusEl.style.background = 'var(--red-bg)';
     statusEl.style.color = 'var(--red)';
     statusEl.textContent = 'Error: ' + e.message;
   }
