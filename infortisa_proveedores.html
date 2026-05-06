@@ -40,7 +40,7 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); font
 .logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
 .logo-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
 .logo-sub { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
-.nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; color: var(--text2); transition: all .15s; border: none; background: none; width: 100%; text-align: left; }
 .nav-item:hover { background: var(--surface2); color: var(--text); }
 .nav-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
@@ -247,6 +247,10 @@ select.form-input { cursor: pointer; }
     <button class="nav-item" onclick="goTo('manual', this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
       Manual de uso
+    </button>
+    <button class="nav-item" onclick="goTo('compliance', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l5.5 3v4c0 3.5-2.5 5.8-5.5 7C2.5 13.8 0 11.5 0 8V4L8 1z" transform="translate(1.5,1)"/><path d="M5 7.5l2 2 3.5-3.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(1.5,1)"/></svg>
+      Compliance
     </button>
   </nav>
   <div class="sidebar-footer">
@@ -1101,6 +1105,113 @@ select.form-input { cursor: pointer; }
             <li>Los datos quedan disponibles en la ficha de cada proveedor pulsando <strong>Cargar histórico</strong></li>
             <li>El % de dependencia se recalcula automáticamente con los nuevos datos</li>
           </ol>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COMPLIANCE -->
+    <div id="s-compliance" style="display:none">
+      <div style="max-width:860px">
+        <div class="manual-section">
+          <div class="manual-h1">Procedimiento de Compliance — Alta y Revisión de Proveedores</div>
+          <div class="manual-p" style="color:var(--text3);font-size:12px">Infortisa S.L. · Dirección de Negocio · v1.0 · 2025</div>
+          <div class="manual-note">Este documento establece el procedimiento interno oficial para la verificación, validación y seguimiento de proveedores en Infortisa S.L.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">1. Objetivo</div>
+          <div class="manual-p">Establecer un procedimiento interno de verificación y validación para el <strong>alta de nuevos proveedores</strong> en Infortisa S.L., con el objetivo de garantizar la solvencia, legalidad y viabilidad comercial de las empresas con las que se establecen relaciones comerciales.</div>
+          <div class="manual-p">Este proceso busca minimizar riesgos legales, financieros y de dependencia comercial.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">2. Solicitud de Alta de Proveedor</div>
+          <div class="manual-p">El proceso de alta puede iniciarse a solicitud de:</div>
+          <ul class="manual-ul">
+            <li>Product Manager</li>
+            <li>Departamento Comercial</li>
+            <li>Dirección</li>
+            <li>Otros departamentos que identifiquen una oportunidad de negocio</li>
+          </ul>
+          <div class="manual-p">La solicitud deberá comunicarse a <strong>Dirección</strong> o al departamento responsable del alta de proveedores.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">3. Documentación Obligatoria del Proveedor</div>
+          <div class="manual-p">Antes de proceder al alta, el proveedor deberá aportar la siguiente documentación <strong>actualizada</strong>:</div>
+          <div class="manual-h3">Documentación fiscal y legal</div>
+          <ul class="manual-ul">
+            <li>Certificado de estar al corriente con <strong>Hacienda</strong></li>
+            <li>Certificado de estar al corriente con la <strong>Seguridad Social</strong></li>
+            <li>Alta en el <strong>IAE</strong></li>
+            <li>Escritura de constitución de la sociedad</li>
+            <li>Tarjeta identificativa del <strong>CIF</strong></li>
+          </ul>
+          <div class="manual-note">Esta documentación permite verificar la <strong>existencia legal</strong> de la empresa, su situación fiscal y su situación con la Seguridad Social.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">4. Informe Comercial Interno</div>
+          <div class="manual-p">De forma paralela, el departamento de Administración solicitará un <strong>informe comercial del proveedor</strong> (Informe Informa D&amp;B) que incluirá, entre otros:</div>
+          <ul class="manual-ul">
+            <li>Facturación de los últimos años</li>
+            <li>Número de empleados</li>
+            <li>Actividad empresarial</li>
+            <li>Solvencia y estabilidad financiera</li>
+            <li>Estructura comercial</li>
+            <li>Otros indicadores relevantes</li>
+          </ul>
+          <div class="manual-p">Este informe permitirá evaluar la capacidad real del proveedor para operar con Infortisa.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">5. Criterios de Evaluación</div>
+          <div class="manual-p">Para aprobar el alta del proveedor se analizarán principalmente los siguientes parámetros:</div>
+
+          <div class="manual-h3">Dependencia comercial</div>
+          <div class="manual-warn"><strong>Infortisa no deberá representar más del 25% de la facturación total del proveedor.</strong> Este criterio busca evitar situaciones de dependencia económica excesiva, reducir riesgos comerciales y garantizar estabilidad en la relación comercial.</div>
+
+          <div class="manual-h3">Coherencia estructural</div>
+          <div class="manual-p">Se evaluará que exista coherencia entre:</div>
+          <ul class="manual-ul">
+            <li>Volumen de facturación</li>
+            <li>Número de empleados</li>
+            <li>Capacidad operativa</li>
+            <li>Estructura empresarial</li>
+          </ul>
+          <div class="manual-p">El objetivo es asegurar que el proveedor tiene capacidad real para sostener el volumen de negocio previsto.</div>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">6. Validación Final</div>
+          <div class="manual-p">Una vez revisada la documentación y el informe comercial:</div>
+          <ol class="manual-ol">
+            <li>Se analizará toda la información disponible.</li>
+            <li>Se valorará si el proveedor cumple los estándares de Infortisa.</li>
+            <li>La decisión final de alta será <strong>validada por Dirección</strong> o por el responsable designado.</li>
+          </ol>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">7. Archivo y Control</div>
+          <div class="manual-p">Toda la documentación recopilada deberá:</div>
+          <ul class="manual-ul">
+            <li>Guardarse en el <strong>sistema interno de gestión documental de compras</strong> (carpeta OneDrive del proveedor).</li>
+            <li>Estar disponible para revisiones internas o auditorías.</li>
+          </ul>
+        </div>
+
+        <div class="manual-section">
+          <div class="manual-h2">8. Revisión Periódica</div>
+          <div class="manual-p">Infortisa podrá revisar periódicamente la situación de los proveedores dados de alta, especialmente en relación con:</div>
+          <ul class="manual-ul">
+            <li>Situación fiscal</li>
+            <li>Cambios societarios</li>
+            <li>Evolución del negocio</li>
+            <li>Dependencia comercial</li>
+          </ul>
+          <div class="manual-note">La periodicidad de revisión se configura por proveedor en la aplicación (trimestral, semestral o anual). El sistema envía recordatorios automáticos mediante Power Automate.</div>
         </div>
 
       </div>
@@ -2401,8 +2512,8 @@ function goTo(id, btn) {
   document.getElementById('s-' + id).style.display = 'block';
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  const titles = { dashboard:'Dashboard', proveedores:'Proveedores', alta:'Alta / Compliance', mercado:'Análisis de mercado', claude:'Consultar a Claude', config:'Configuración', manual:'Manual de uso' };
-  const subs   = { dashboard:'Resumen general', proveedores:'Gestión del portfolio', alta:'Alta manual y evaluación automática', mercado:'Benchmarking del sector', claude:'Inteligencia artificial sobre tu portfolio', config:'Parámetros del sistema', manual:'Guía completa del sistema de inteligencia de proveedores' };
+  const titles = { dashboard:'Dashboard', proveedores:'Proveedores', alta:'Alta / Compliance', mercado:'Análisis de mercado', claude:'Consultar a Claude', config:'Configuración', manual:'Manual de uso', compliance:'Procedimiento de Compliance' };
+  const subs   = { dashboard:'Resumen general', proveedores:'Gestión del portfolio', alta:'Alta manual y evaluación automática', mercado:'Benchmarking del sector', claude:'Inteligencia artificial sobre tu portfolio', config:'Parámetros del sistema', manual:'Guía completa del sistema de inteligencia de proveedores', compliance:'Procedimiento interno de alta y revisión de proveedores' };
   document.getElementById('page-title').textContent = titles[id] || id;
   document.getElementById('page-sub').textContent = subs[id] || '';
   if (id === 'proveedores') renderTablaProveedores(PROVEEDORES);
