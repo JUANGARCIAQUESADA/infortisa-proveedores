@@ -430,17 +430,24 @@ select.form-input { cursor: pointer; }
           </div>
           <div>
             <div class="card mb16">
-              <div class="card-title">Documentación requerida</div>
-              <div class="doc-list" id="doc-list">
-                <div class="doc-item"><span class="doc-name">Informe comercial Informa D&amp;B</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Cert. Hacienda al corriente</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Cert. Seguridad Social</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Escritura de constitución</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Tarjeta identificativa CIF</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Cuentas anuales auditadas</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Modelo 303 — Declaración trimestral IVA</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Modelo 322 — Declaración IVA (grupo fiscal)</span><span class="badge badge-warn">Pendiente</span></div>
-                <div class="doc-item"><span class="doc-name">Certificado de titularidad bancaria</span><span class="badge badge-warn">Pendiente</span></div>
+              <div class="card-title">Documentación a solicitar <span style="font-size:11px;font-weight:400;color:var(--text3)">marca / desmarca según el caso</span></div>
+              <div id="alta-doc-list" style="display:flex;flex-direction:column;gap:2px">
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Informe comercial Informa D&amp;B</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Certificado de Hacienda al corriente</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Certificado de Seguridad Social al corriente</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Escritura de constitución</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Tarjeta identificativa CIF</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Cuentas anuales auditadas</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Modelo 303 — Declaración trimestral IVA</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Modelo 322 — Declaración IVA (grupo fiscal)</span></label>
+                <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''"><input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span>Certificado de titularidad bancaria</span></label>
+              </div>
+              <div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+                <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;font-family:var(--mono)">Añadir documento</div>
+                <div style="display:flex;gap:8px">
+                  <input id="alta-doc-nuevo" class="form-input" style="flex:1;font-size:13px" placeholder="Nombre del documento..." onkeydown="if(event.key==='Enter'){event.preventDefault();altaAgregarDoc()}">
+                  <button class="btn btn-ghost btn-sm" onclick="altaAgregarDoc()">+ Añadir</button>
+                </div>
               </div>
             </div>
             <div class="card mb16" style="border:2px solid var(--accent);background:var(--accent-bg)">
@@ -1883,7 +1890,34 @@ async function guardarProveedor() {
 
       statusEl.style.background = 'var(--green-bg)';
       statusEl.style.color = 'var(--green)';
-      statusEl.textContent = `✓ "${nombre}" guardado en SharePoint. Power Automate creará la carpeta y enviará el formulario al proveedor.`;
+      statusEl.textContent = `✓ "${nombre}" guardado en SharePoint.`;
+
+      if (esNuevo && email) {
+        statusEl.textContent += ' Enviando solicitud de documentación...';
+        const checkboxes = document.querySelectorAll('#alta-doc-list input[type=checkbox]:checked');
+        if (checkboxes.length) {
+          const isEn = extranjero;
+          const docsList = Array.from(checkboxes).map((cb, i) => `${i+1}. ${cb.parentElement.querySelector('span').textContent}`).join('\n');
+          const subject = isEn
+            ? `Document request — Infortisa S.L. supplier compliance`
+            : `Solicitud de documentación — Compliance proveedor Infortisa S.L.`;
+          const body = isEn
+            ? `Dear ${contacto || nombre},\n\nAs part of our internal compliance process, we kindly request the following documents:\n\n${docsList}\n\nPlease reply to this email attaching the requested documents.\n\nBest regards,\nJuan García Quesada\nBusiness Director · Infortisa S.L.\njuan@infortisa.com`
+            : `Estimado/a ${contacto || nombre},\n\nEn el marco de nuestro proceso de compliance para el alta de proveedores, le solicitamos la siguiente documentación:\n\n${docsList}\n\nPor favor, responda a este email adjuntando los documentos solicitados.\n\nUn saludo,\nJuan García Quesada\nDirector de Negocio · Infortisa S.L.\njuan@infortisa.com`;
+          try {
+            const mailResp = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+              method: 'POST',
+              headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: { subject, body: { contentType: 'Text', content: body }, toRecipients: [{ emailAddress: { address: email, name: nombre } }] }, saveToSentItems: true })
+            });
+            statusEl.textContent = mailResp.ok || mailResp.status === 202
+              ? `✓ "${nombre}" guardado. Email de solicitud enviado a ${email} con ${checkboxes.length} documento${checkboxes.length > 1 ? 's' : ''}.`
+              : `✓ "${nombre}" guardado en SharePoint. (Error enviando email: HTTP ${mailResp.status})`;
+          } catch(mailErr) {
+            statusEl.textContent = `✓ "${nombre}" guardado en SharePoint. (Error enviando email: ${mailErr.message})`;
+          }
+        }
+      }
 
       await cargarProveedoresSP(token);
 
@@ -2330,6 +2364,22 @@ function solicitarDocumentos(id, nombre, email, contacto, extranjero) {
     </div>
   </div>`;
   document.body.appendChild(modal);
+}
+
+function altaAgregarDoc() {
+  const input = document.getElementById('alta-doc-nuevo');
+  const texto = input.value.trim();
+  if (!texto) return;
+  const lista = document.getElementById('alta-doc-list');
+  const item  = document.createElement('label');
+  item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;font-size:13px;cursor:pointer;transition:background .1s';
+  item.onmouseover = () => item.style.background = 'var(--surface2)';
+  item.onmouseout  = () => item.style.background = '';
+  item.innerHTML = `<input type="checkbox" checked style="width:15px;height:15px;flex-shrink:0"><span style="flex:1">${texto}</span>
+    <button onclick="this.closest('label').remove()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:17px;line-height:1;padding:0 2px" title="Eliminar">×</button>`;
+  lista.appendChild(item);
+  input.value = '';
+  input.focus();
 }
 
 function agregarDocSolicitud(isEn) {
