@@ -12,14 +12,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LlévateUnChollo - Chollos al Mejor Precio",
+  metadataBase: new URL("https://www.llevateunchollo.es"),
+  title: {
+    default: "LlévateUnChollo - Chollos al Mejor Precio",
+    template: "%s | LlévateUnChollo",
+  },
   description:
     "Descubre los mejores chollos y ofertas al mejor precio. Productos de calidad con descuentos increíbles.",
-  keywords: ["chollos", "ofertas", "descuentos", "comprar barato", "liquidación"],
+  keywords: ["chollos", "ofertas", "descuentos", "comprar barato", "liquidación", "oportunidades"],
+  alternates: {
+    canonical: "https://www.llevateunchollo.es",
+  },
   openGraph: {
     title: "LlévateUnChollo - Chollos al Mejor Precio",
     description:
       "Descubre los mejores chollos y ofertas al mejor precio.",
+    url: "https://www.llevateunchollo.es",
+    siteName: "LlévateUnChollo",
+    locale: "es_ES",
     type: "website",
   },
 };

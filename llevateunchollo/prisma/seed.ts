@@ -1,10 +1,20 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
+import path from "path";
 
-const prisma = new PrismaClient();
+const dbUrl = process.env.DATABASE_URL || "file:./dev.db";
+const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : dbUrl;
+const absolutePath = path.isAbsolute(dbPath)
+  ? dbPath
+  : path.resolve(process.cwd(), dbPath);
+
+const adapter = new PrismaBetterSqlite3({ url: absolutePath });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
+  console.log("Using database:", absolutePath);
 
   // Categories
   const eventosExterior = await prisma.category.upsert({
