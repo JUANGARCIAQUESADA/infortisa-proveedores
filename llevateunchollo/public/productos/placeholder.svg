@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#FFF7ED"/>
+  <rect x="80" y="80" width="240" height="240" rx="12" fill="#FFEDD5"/>
+  <circle cx="200" cy="175" r="45" fill="#FED7AA"/>
+  <rect x="140" y="240" width="120" height="10" rx="5" fill="#FED7AA"/>
+  <rect x="160" y="260" width="80" height="8" rx="4" fill="#FED7AA"/>
+  <path d="M170 175 C170 158 183 145 200 145 C217 145 230 158 230 175 C230 192 217 205 200 205 C183 205 170 192 170 175Z" fill="#F97316" opacity="0.3"/>
+  <path d="M185 170 L195 180 L215 160" stroke="#F97316" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="200" y="320" font-family="Arial, sans-serif" font-size="14" fill="#FB923C" text-anchor="middle" font-weight="600">LlévateUnChollo</text>
+</svg>
