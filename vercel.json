@@ -1,3 +1,6 @@
 {
-  "rootDirectory": "llevateunchollo"
+  "framework": "nextjs",
+  "buildCommand": "cd llevateunchollo && npm run build",
+  "installCommand": "cd llevateunchollo && npm install",
+  "outputDirectory": "llevateunchollo/.next"
 }
