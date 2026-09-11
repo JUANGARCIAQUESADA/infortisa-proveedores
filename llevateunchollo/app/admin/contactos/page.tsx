@@ -9,7 +9,7 @@ async function getContacts() {
 
 export default async function AdminContactosPage() {
   const contacts = await getContacts();
-  const unread = contacts.filter((c) => !c.read).length;
+  const unread = contacts.filter((c: { read: boolean }) => !c.read).length;
 
   return (
     <div className="p-8">
