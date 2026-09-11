@@ -1,6 +1,5 @@
 import React from "react";
 import prisma from "@/lib/prisma";
-import type { Contact } from "@prisma/client";
 
 async function getContacts() {
   return prisma.contact.findMany({
@@ -8,9 +7,11 @@ async function getContacts() {
   });
 }
 
+type ContactRow = Awaited<ReturnType<typeof getContacts>>[number];
+
 export default async function AdminContactosPage() {
   const contacts = await getContacts();
-  const unread = contacts.filter((c: Contact) => !c.read).length;
+  const unread = contacts.filter((c: ContactRow) => !c.read).length;
 
   return (
     <div className="p-8">
@@ -22,7 +23,7 @@ export default async function AdminContactosPage() {
       </div>
 
       <div className="space-y-4">
-        {contacts.map((contact: Contact) => (
+        {contacts.map((contact: ContactRow) => (
           <div
             key={contact.id}
             className={`bg-white rounded-xl border p-6 ${
