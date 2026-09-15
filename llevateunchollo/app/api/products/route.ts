@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    const serialized = products.map((p) => ({
+    type ProductRow = (typeof products)[number];
+    const serialized = products.map((p: ProductRow) => ({
       ...p,
       images: JSON.parse(p.images) as string[],
       createdAt: p.createdAt.toISOString(),
