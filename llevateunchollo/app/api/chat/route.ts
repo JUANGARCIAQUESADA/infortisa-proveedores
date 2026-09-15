@@ -15,9 +15,11 @@ export async function POST(request: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
+  type ProductItem = (typeof products)[number];
+
   const productList = products.length
     ? products
-        .map((p) => {
+        .map((p: ProductItem) => {
           const discount =
             p.originalPrice && p.originalPrice > p.price
               ? ` (antes ${p.originalPrice}€, ahorro ${Math.round((1 - p.price / p.originalPrice) * 100)}%)`
