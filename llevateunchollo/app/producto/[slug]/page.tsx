@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import AddToCartButton from "./AddToCartButton";
+export const dynamic = "force-dynamic";
 
 async function getProduct(slug: string): Promise<Product | null> {
   const raw = await prisma.product.findUnique({

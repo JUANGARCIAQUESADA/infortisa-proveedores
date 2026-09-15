@@ -4,6 +4,7 @@ import { ProductGrid } from "@/components/products/ProductGrid";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 import { Button } from "@/components/ui/Button";
 import { Product } from "@/types";
+export const dynamic = "force-dynamic";
 
 async function getFeaturedProducts(): Promise<Product[]> {
   const raw = await prisma.product.findMany({

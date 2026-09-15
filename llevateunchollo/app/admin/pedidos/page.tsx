@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+export const dynamic = "force-dynamic";
 
 async function getOrders() {
   return prisma.order.findMany({

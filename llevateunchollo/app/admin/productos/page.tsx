@@ -3,6 +3,7 @@ import Image from "next/image";
 import prisma from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import ToggleActiveButton from "./ToggleActiveButton";
+export const dynamic = "force-dynamic";
 
 async function getProducts() {
   return prisma.product.findMany({
