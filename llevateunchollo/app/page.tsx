@@ -13,7 +13,8 @@ async function getFeaturedProducts(): Promise<Product[]> {
     take: 3,
   });
 
-  return raw.map((p) => ({
+  type RawProduct = (typeof raw)[number];
+  return raw.map((p: RawProduct) => ({
     ...p,
     images: JSON.parse(p.images) as string[],
     createdAt: p.createdAt.toISOString(),
