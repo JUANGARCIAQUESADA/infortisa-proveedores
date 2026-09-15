@@ -1,52 +1,47 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-import path from "path";
 
-const dbUrl = process.env.DATABASE_URL || "file:./dev.db";
-const dbPath = dbUrl.startsWith("file:") ? dbUrl.slice("file:".length) : dbUrl;
-const absolutePath = path.isAbsolute(dbPath)
-  ? dbPath
-  : path.resolve(process.cwd(), dbPath);
-
-const adapter = new PrismaBetterSqlite3({ url: absolutePath });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database...");
-  console.log("Using database:", absolutePath);
 
   // Categories
   const eventosExterior = await prisma.category.upsert({
     where: { slug: "eventos-exterior" },
     update: {},
-    create: {
-      name: "Eventos y Exterior",
-      slug: "eventos-exterior",
-    },
+    create: { name: "Eventos y Exterior", slug: "eventos-exterior" },
   });
 
   await prisma.category.upsert({
     where: { slug: "hogar" },
     update: {},
-    create: {
-      name: "Hogar",
-      slug: "hogar",
-    },
+    create: { name: "Hogar", slug: "hogar" },
   });
 
   await prisma.category.upsert({
     where: { slug: "deportes" },
     update: {},
-    create: {
-      name: "Deportes",
-      slug: "deportes",
-    },
+    create: { name: "Deportes", slug: "deportes" },
   });
 
-  console.log("Categories created:", eventosExterior.name);
+  await prisma.category.upsert({
+    where: { slug: "electronica" },
+    update: {},
+    create: { name: "Electrónica", slug: "electronica" },
+  });
 
-  // Product
+  await prisma.category.upsert({
+    where: { slug: "moda" },
+    update: {},
+    create: { name: "Moda", slug: "moda" },
+  });
+
+  console.log("Categories created");
+
+  // Sample product
   const carpa = await prisma.product.upsert({
     where: { slug: "carpa-plegable-profesional-3x3" },
     update: {},
@@ -68,7 +63,7 @@ async function main() {
 
   console.log("Product created:", carpa.name);
 
-  // Admin User
+  // Admin user
   const hashedPassword = await bcrypt.hash("admin123", 10);
   const admin = await prisma.adminUser.upsert({
     where: { email: "admin@llevateunchollo.es" },
