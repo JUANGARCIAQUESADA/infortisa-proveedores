@@ -8,6 +8,8 @@ async function getOrders() {
   });
 }
 
+type OrderRow = Awaited<ReturnType<typeof getOrders>>[number];
+
 const statusLabels: Record<string, { label: string; color: string }> = {
   pending: { label: "Pendiente", color: "text-yellow-700 bg-yellow-50" },
   paid: { label: "Pagado", color: "text-green-700 bg-green-50" },
@@ -49,7 +51,7 @@ export default async function AdminPedidosPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {orders.map((order) => {
+            {orders.map((order: OrderRow) => {
               const statusInfo = statusLabels[order.status] || {
                 label: order.status,
                 color: "text-gray-700 bg-gray-100",

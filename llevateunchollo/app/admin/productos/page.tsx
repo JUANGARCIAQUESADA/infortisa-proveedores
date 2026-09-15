@@ -11,6 +11,8 @@ async function getProducts() {
   });
 }
 
+type ProductRow = Awaited<ReturnType<typeof getProducts>>[number];
+
 export default async function AdminProductosPage() {
   const products = await getProducts();
 
@@ -71,7 +73,7 @@ export default async function AdminProductosPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {products.map((product) => {
+            {products.map((product: ProductRow) => {
               const images = JSON.parse(product.images) as string[];
               const imageSrc = images[0] || "/productos/placeholder.svg";
               return (
